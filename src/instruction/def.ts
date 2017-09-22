@@ -1,7 +1,7 @@
 
 import { Word } from "../def";
 import Memory from "../memory";
-import Registers from "../registers";
+import { Registers } from "../registers";
 import { findFirst } from "../utility";
 
 export class Instruction {

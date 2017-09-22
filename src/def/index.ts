@@ -9,3 +9,7 @@ export type Word = [
     Bit, Bit, Bit, Bit, Bit, Bit, Bit, Bit,
     Bit, Bit, Bit, Bit, Bit, Bit, Bit, Bit
 ];
+export type HalfWord = [
+    Bit, Bit, Bit, Bit, Bit, Bit, Bit, Bit,
+    Bit, Bit, Bit, Bit, Bit, Bit, Bit, Bit
+];

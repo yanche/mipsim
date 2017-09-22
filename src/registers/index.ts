@@ -1,5 +1,5 @@
 
-import { Word } from "../def";
+import { Word, HalfWord } from "../def";
 import { byte, flatten } from "../utility";
 
 interface Register {
@@ -8,6 +8,12 @@ interface Register {
 }
 
 export enum REG {
+    STATUS = -7,
+    BADVADDR = -6,
+    CAUSE = -5,
+    EPC = -4,
+    LO = -3,
+    HI = -2,
     PC = -1,
     ZERO = 0,
     AT = 1,
@@ -43,13 +49,19 @@ export enum REG {
     RA = 31
 }
 
-export default class Registers {
+export class Registers {
     private _map: Map<number, Register>;
     private _word4: Word;
 
     public advancePC(): void {
         // PC = PC + 4
-        this.setVal(REG.PC, <Word>byte.bitsAdd(this.getVal(REG.PC), this._word4).result);
+        this.setVal(REG.PC, byte.bitsAdd(this.getVal(REG.PC), this._word4).result);
+    }
+
+    public advancePC16BitsOffset(offset: HalfWord): void {
+        const neg = offset[0];
+        const prefix = neg ? byte.makeTrueArray(14) : byte.makeFalseArray(14);
+        this.setVal(REG.PC, byte.bitsAdd(this.getVal(REG.PC), <Word>prefix.concat(offset).concat([false, false])).result);
     }
 
     public getVal(regnum: number): Word {

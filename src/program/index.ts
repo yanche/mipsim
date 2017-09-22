@@ -1,6 +1,6 @@
 
 import Memory from "../memory";
-import Registers from "../registers";
+import { Registers } from "../registers";
 import { Addr } from "../def";
 import * as instruction from "../instruction";
 

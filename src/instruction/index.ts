@@ -3,7 +3,7 @@ import { Instruction } from "./def";
 import { findFirst } from "../utility";
 import { Word } from "../def";
 import Memory from "../memory";
-import Registers from "../registers";
+import { Registers } from "../registers";
 import { finder as arithmeticFinder } from "./arithmetic";
 
 // return true: halt, false: continue
