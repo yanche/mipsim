@@ -1,30 +1,30 @@
 
-import { Register } from "../register";
+import { Registers, REG } from "../registers";
+import { Word } from "../def";
+import Memory from "../memory";
+import { Instruction, InstructionFinder } from "./def";
+import { byte } from "../utility";
 
-// copy the contents of the hi register to des
-export class MFHI {
-    constructor(public des: Register) {
-
+// the contents of register HI are moved to the specified register
+// $d = $HI
+const mfhi = new Instruction({
+    pattern: "0000 0000 0000 0000 dddd d000 0001 0000",
+    execute: (itrn: Word, mem: Memory, regs: Registers) => {
+        const reg_d = byte.bits5ToRegNum(itrn, 16);
+        regs.setVal(reg_d, regs.getVal(REG.HI));
+        regs.advancePC();
     }
-}
+});
 
-// copy the contents of the lo register to des
-export class MFLO {
-    constructor(public des: Register) {
-
+// the contents of register LO are moved to the specified register
+// $d = $LO
+const mflo = new Instruction({
+    pattern: "0000 0000 0000 0000 dddd d000 0001 0010",
+    execute: (itrn: Word, mem: Memory, regs: Registers) => {
+        const reg_d = byte.bits5ToRegNum(itrn, 16);
+        regs.setVal(reg_d, regs.getVal(REG.LO));
+        regs.advancePC();
     }
-}
+});
 
-// copy the contents of the src1 to hi
-export class MTHI {
-    constructor(public src1: Register) {
-
-    }
-}
-
-// copy the contents of the src1 to lo
-export class MTLO {
-    constructor(public src1: Register) {
-
-    }
-}
+export const finder = new InstructionFinder([mfhi, mflo]);

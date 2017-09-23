@@ -126,18 +126,17 @@ export function bitsEqual(bits1: Array<boolean>, bits2: Array<boolean>): boolean
     });
 }
 
-export function bitsDiv(bits1: Word, bits2: Word): {
-    quotient: Word;
-    remainder: Word;
-}
-
+// export function bitsDiv(bits1: Word, bits2: Word): {
+//     quotient: Word;
+//     remainder: Word;
+// }
 // bits1 / bits2
 export function bitsDiv(bits1: Word, bits2: Word, signed: boolean): {
     quotient: Word;
     remainder: Word;
 } {
     if (bits1.length !== bits2.length) {
-        throw new Error(`length different in bitsEqual, ${bits1.length}, ${bits2.length}`);
+        throw new Error(`length different in bitsDiv, ${bits1.length}, ${bits2.length}`);
     }
     const num1 = bitsToNum(bits1, signed), num2 = bitsToNum(bits2, signed);
     const r = num1 % num2;
@@ -154,5 +153,25 @@ export function bitsDiv(bits1: Word, bits2: Word, signed: boolean): {
     return {
         quotient: <Word>qbits,
         remainder: <Word>rbits
+    };
+}
+
+// bits1 / bits2
+export function bitsMul(bits1: Word, bits2: Word, signed: boolean): {
+    high: Word;
+    low: Word;
+} {
+    if (bits1.length !== bits2.length) {
+        throw new Error(`length different in bitsMul, ${bits1.length}, ${bits2.length}`);
+    }
+    const num1 = bitsToNum(bits1, signed), num2 = bitsToNum(bits2, signed);
+    const mul = num1 * num2;
+    let bits = numToBits(mul);
+    if (bits.length < 64) {
+        bits = makeArray(64 - bits.length, bits[0]).concat(bits);
+    }
+    return {
+        high: <Word>bits.slice(32),
+        low: <Word>bits.slice(32)
     };
 }

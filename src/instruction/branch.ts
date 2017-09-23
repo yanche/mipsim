@@ -133,7 +133,7 @@ const bne = new Instruction({
     }
 });
 
-
+export const finder = new InstructionFinder([beq, bgez, bgezal, bgtz, blez, bltz, bltzal, bne]);
 
 // // unconditional branch to label lab
 // export class B {

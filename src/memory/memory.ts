@@ -1,11 +1,23 @@
 
 import { Block } from "./mblock";
-import { Addr, Word } from "../def";
+import { Addr, Word, Byte } from "../def";
 
 export class Memory {
     private _map: Map<Addr, Block>;
 
-    public readword(addr: Addr): Word {
+    public readByte(addr: Addr): Byte {
+
+    }
+
+    public readWord(addr: Addr): Word {
+
+    }
+
+    public writeByte(addr: Addr, byte: Byte): void {
+
+    }
+
+    public writeWord(addr: Addr, word: Word): void {
 
     }
 
