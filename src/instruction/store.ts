@@ -34,3 +34,5 @@ const sw = new Instruction({
         regs.advancePC();
     }
 });
+
+export const finder = new InstructionFinder([sb, sw]);

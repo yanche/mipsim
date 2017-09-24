@@ -1,13 +1,19 @@
 
 import Memory from "../memory";
-import { Registers } from "../registers";
-import { Addr } from "../def";
+import { Registers, REG } from "../registers";
+import { Addr, codeStartAddr } from "../def";
 import * as instruction from "../instruction";
+import * as parser from "../parser";
 
-function execute(mem: Memory, regs: Registers, addr: Addr) {
+function execute(mem: Memory, regs: Registers) {
     let halt = false;
     do {
-        let itrn = mem.readword(addr);
-        halt = instruction.execute(itrn, mem, regs);
+        halt = instruction.execute(mem, regs);
     } while (!halt);
+}
+
+export function executeMIPSCode(codelines: string[]): void {
+    const regs = new Registers();
+    regs.setVal(REG.PC, codeStartAddr); // set program start address
+    execute(parser.parseMIPSCode(codelines), regs);
 }

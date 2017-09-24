@@ -19,6 +19,12 @@ const noop = new Instruction({
 const syscall = new Instruction({
     pattern: "0000 00-- ---- ---- ---- ---- --00 1100",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
+        const v0 = byte.bitsToNum(regs.getVal(REG.V0), false);
+        if (v0 === 10) {
+            return true; // halt
+        }
         regs.advancePC();
     }
 });
+
+export const finder = new InstructionFinder([noop, syscall]);

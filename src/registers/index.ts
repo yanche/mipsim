@@ -84,6 +84,34 @@ export class Registers {
 
     constructor() {
         this._map = new Map<number, Register>();
+        this._map.set(REG.STATUS, {
+            name: "status",
+            value: byte.makeWord0()
+        });
+        this._map.set(REG.BADVADDR, {
+            name: "badvaddr",
+            value: byte.makeWord0()
+        });
+        this._map.set(REG.CAUSE, {
+            name: "cause",
+            value: byte.makeWord0()
+        });
+        this._map.set(REG.EPC, {
+            name: "epc",
+            value: byte.makeWord0()
+        });
+        this._map.set(REG.LO, {
+            name: "lo",
+            value: byte.makeWord0()
+        });
+        this._map.set(REG.HI, {
+            name: "hi",
+            value: byte.makeWord0()
+        });
+        this._map.set(REG.PC, {
+            name: "pc",
+            value: byte.makeWord0()
+        });
         this._map.set(REG.ZERO, {
             name: "zero",
             value: byte.makeWord0()

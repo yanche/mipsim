@@ -13,3 +13,4 @@ export type HalfWord = [
     Bit, Bit, Bit, Bit, Bit, Bit, Bit, Bit
 ];
 export type Addr = Word;
+export const codeStartAddr: Addr = null;

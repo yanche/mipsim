@@ -6,13 +6,11 @@ import { findFirst } from "../utility";
 
 export class Instruction {
     private _pattern: Array<boolean>;
-    private _execute: (itrn: Word, mem: Memory, regs: Registers) => void;
-    private _halt: boolean;
+    private _execute: (itrn: Word, mem: Memory, regs: Registers) => void | boolean;
 
     constructor(options: {
         pattern: string;
-        execute: (itrn: Word, mem: Memory, regs: Registers) => void;
-        halt?: boolean;
+        execute: (itrn: Word, mem: Memory, regs: Registers) => void | boolean;
     }) {
         this._pattern = options.pattern.split("").filter(s => s !== " ").map(s => {
             if (s === "0") {
@@ -27,12 +25,10 @@ export class Instruction {
             throw new Error(`instruction pattern should be a string of 32 valid characters(0 1 or others): ${this._pattern.length}`);
         }
         this._execute = options.execute;
-        this._halt = options.halt || false;
     }
 
     public execute(itrn: Word, mem: Memory, regs: Registers): boolean {
-        this._execute(itrn, mem, regs);
-        return this._halt;
+        return this._execute(itrn, mem, regs) || false;
     }
 
     public match(itrn: Word): boolean {
