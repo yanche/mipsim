@@ -117,6 +117,19 @@ export function bitsOr(bits1: Array<boolean>, bits2: Array<boolean>): Array<bool
     return result;
 }
 
+export function bitsXor(bits1: Word, bits2: Word): Word;
+export function bitsXor(bits1: Array<boolean>, bits2: Array<boolean>): Array<boolean> {
+    if (bits1.length !== bits2.length) {
+        throw new Error(`length different in bitsXor, ${bits1.length}, ${bits2.length}`);
+    }
+    const len = bits1.length;
+    const result = new Array(len);
+    for (let i = 0; i < len; ++i) {
+        result[i] = bits1[i] !== bits2[i]; // bits1[i] ^ bits2[i]
+    }
+    return result;
+}
+
 export function bitsEqual(bits1: Array<boolean>, bits2: Array<boolean>): boolean {
     if (bits1.length !== bits2.length) {
         throw new Error(`length different in bitsEqual, ${bits1.length}, ${bits2.length}`);

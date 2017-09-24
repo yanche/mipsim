@@ -14,3 +14,11 @@ const noop = new Instruction({
         regs.advancePC();
     }
 });
+
+// generates a software interrupt
+const syscall = new Instruction({
+    pattern: "0000 00-- ---- ---- ---- ---- --00 1100",
+    execute: (itrn: Word, mem: Memory, regs: Registers) => {
+        regs.advancePC();
+    }
+});

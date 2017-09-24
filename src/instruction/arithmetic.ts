@@ -229,7 +229,7 @@ const sltiu = new Instruction({
 // zeroes are shifted in
 // $d = $t << h
 const sll = new Instruction({
-    pattern: "0000 00ss ssst tttt dddd dhhh hh00 0000",
+    pattern: "0000 00-- ---t tttt dddd dhhh hh00 0000",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_t = byte.bits5ToRegNum(itrn, 11);
         const reg_d = byte.bits5ToRegNum(itrn, 16);
@@ -256,4 +256,118 @@ const sllv = new Instruction({
     }
 });
 
-export const finder = new InstructionFinder([add, addu, addiu, and, andi, divu, div, multu, mult, or, ori, slt, sltu, slti, sltiu, sll, sllv]);
+// shifts a register value right by the shift amount (shamt) and places the value in the destination register.
+// the sign bit is shifted in
+// $d = $t >> h
+const sra = new Instruction({
+    pattern: "0000 00-- ---t tttt dddd dhhh hh00 0011",
+    execute: (itrn: Word, mem: Memory, regs: Registers) => {
+        const reg_t = byte.bits5ToRegNum(itrn, 11);
+        const reg_d = byte.bits5ToRegNum(itrn, 16);
+        const shiftRight = byte.bits5ToRegNum(itrn, 21);
+        const reg_t_data = regs.getVal(reg_t);
+        const data = <Word>byte.makeArray(shiftRight, reg_t_data[0]).concat(reg_t_data.slice(0, -shiftRight));
+        regs.setVal(reg_d, data);
+        regs.advancePC();
+    }
+});
+
+// shifts a register value right by the shift amount (shamt) and places the value in the destination register
+// zeroes are shifted in
+// $d = $t >> h
+const srl = new Instruction({
+    pattern: "0000 00-- ---t tttt dddd dhhh hh00 0010",
+    execute: (itrn: Word, mem: Memory, regs: Registers) => {
+        const reg_t = byte.bits5ToRegNum(itrn, 11);
+        const reg_d = byte.bits5ToRegNum(itrn, 16);
+        const shiftRight = byte.bits5ToRegNum(itrn, 21);
+        const reg_t_data = regs.getVal(reg_t);
+        const data = <Word>byte.makeFalseArray(shiftRight).concat(reg_t_data.slice(0, -shiftRight));
+        regs.setVal(reg_d, data);
+        regs.advancePC();
+    }
+});
+
+// shifts a register value right by the amount specified in $s and places the value in the destination register
+// zeroes are shifted in
+// $d = $t >> $s
+const srlv = new Instruction({
+    pattern: "0000 00ss ssst tttt dddd d000 0000 0110",
+    execute: (itrn: Word, mem: Memory, regs: Registers) => {
+        const reg_s = byte.bits5ToRegNum(itrn, 6);
+        const reg_t = byte.bits5ToRegNum(itrn, 11);
+        const reg_d = byte.bits5ToRegNum(itrn, 16);
+        const shiftRight = byte.bitsToNum(regs.getVal(reg_s), false);
+        const reg_t_data = regs.getVal(reg_t);
+        const data = <Word>byte.makeFalseArray(shiftRight).concat(reg_t_data.slice(0, -shiftRight));
+        regs.setVal(reg_d, data);
+        regs.advancePC();
+    }
+});
+
+// subtracts two registers and stores the result in a register
+// $d = $s - $t
+const sub = new Instruction({
+    pattern: "0000 00ss ssst tttt dddd d000 0010 0010",
+    execute: (itrn: Word, mem: Memory, regs: Registers) => {
+        // const reg_s = byte.bits5ToRegNum(itrn, 6);
+        // const reg_t = byte.bits5ToRegNum(itrn, 11);
+        // const reg_d = byte.bits5ToRegNum(itrn, 16);
+        // const add = byte.bitsAdd(regs.getVal(reg_s), regs.getVal(reg_t));
+        // regs.setVal(reg_d, add.result);
+        // regs.advancePC();
+    }
+});
+
+// subtracts two registers and stores the result in a register
+// $d = $s - $t
+const subu = new Instruction({
+    pattern: "0000 00ss ssst tttt dddd d000 0010 0011",
+    execute: (itrn: Word, mem: Memory, regs: Registers) => {
+        const reg_s = byte.bits5ToRegNum(itrn, 6);
+        const reg_t = byte.bits5ToRegNum(itrn, 11);
+        const reg_d = byte.bits5ToRegNum(itrn, 16);
+        const num_s = byte.bitsToNum(regs.getVal(reg_s), false);
+        const num_t = byte.bitsToNum(regs.getVal(reg_t), false);
+        const num_d = num_s - num_t;
+        let bits_d = byte.numToBits(num_d);
+        if (bits_d.length < 32) {
+            bits_d = byte.makeArray(32 - bits_d.length, bits_d[0]).concat(bits_d);
+        }
+        regs.setVal(reg_d, <Word>bits_d);
+        regs.advancePC();
+    }
+});
+
+// bitwise exclusive ors two registers and stores the result in a register
+// $d = $s ^ $t
+const xor = new Instruction({
+    pattern: "0000 00ss ssst tttt dddd d--- --10 0110",
+    execute: (itrn: Word, mem: Memory, regs: Registers) => {
+        const reg_s = byte.bits5ToRegNum(itrn, 6);
+        const reg_t = byte.bits5ToRegNum(itrn, 11);
+        const reg_d = byte.bits5ToRegNum(itrn, 16);
+        const data = byte.bitsXor(regs.getVal(reg_s), regs.getVal(reg_t));
+        regs.setVal(reg_d, data);
+        regs.advancePC();
+    }
+});
+
+// bitwise exclusive ors a register and an immediate value and stores the result in a register
+// $t = $s ^ imm
+const xori = new Instruction({
+    pattern: "0011 10ss ssst tttt iiii iiii iiii iiii",
+    execute: (itrn: Word, mem: Memory, regs: Registers) => {
+        const reg_s = byte.bits5ToRegNum(itrn, 6);
+        const reg_t = byte.bits5ToRegNum(itrn, 11);
+        const imm = itrn.slice(16);
+        const data = byte.bitsXor(regs.getVal(reg_s), <Word>byte.makeHalfWord0().concat(imm));
+        regs.setVal(reg_t, data);
+        regs.advancePC();
+    }
+});
+
+export const finder = new InstructionFinder([
+    add, addu, addiu, and, andi, divu, div, multu, mult, or, ori, slt, sltu,
+    slti, sltiu, sll, sllv, sra, srl, srlv, sub, subu, xor, xori
+]);
