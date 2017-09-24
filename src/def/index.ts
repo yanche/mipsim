@@ -14,3 +14,4 @@ export type HalfWord = [
 ];
 export type Addr = Word;
 export const codeStartAddr: Addr = null;
+export const memBlockSize = 256; // bytes
