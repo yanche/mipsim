@@ -1,9 +1,9 @@
 
-import { Byte, Word } from "../def";
+import { Byte, Word, Bit } from "../def";
 import { flatten } from "./index";
 import * as validate from "./validate";
 
-export function makeArray<T>(len: number, valForAll: T): Array<T> {
+export function makeArray<T>(len: number, valForAll: T): T[] {
     const ret = new Array<T>(len);
     for (let i = 0; i < len; ++i) {
         ret[i] = valForAll;
@@ -11,11 +11,11 @@ export function makeArray<T>(len: number, valForAll: T): Array<T> {
     return ret;
 }
 
-export function makeFalseArray(len: number): boolean[] {
+export function makeFalseArray(len: number): Bit[] {
     return makeArray(len, false);
 }
 
-export function makeTrueArray(len: number): boolean[] {
+export function makeTrueArray(len: number): Bit[] {
     return makeArray(len, true);
 }
 
@@ -31,7 +31,7 @@ export function makeHalfWord0(): Word {
     return <Word>makeFalseArray(16);
 }
 
-export function bitsToNum(bits: Array<boolean>, signed: boolean): number {
+export function bitsToNum(bits: Bit[], signed: boolean): number {
     let ret = 0;
     for (let i = 0; i < bits.length; ++i) {
         ret = ret * 2 + (bits[i] ? 1 : 0);
@@ -43,7 +43,7 @@ export function bitsToNum(bits: Array<boolean>, signed: boolean): number {
     }
 }
 
-export function numToBits(num: number): Array<boolean> {
+export function numToBits(num: number): Bit[] {
     if (!validate.num(num, validate.NUM_FLAG.INT)) {
         throw new Error(`input for numToBits must be an integer: ${num}`);
     }
@@ -51,7 +51,7 @@ export function numToBits(num: number): Array<boolean> {
     if (neg) {
         num = -num - 1;
     }
-    let ret = new Array<boolean>();
+    let ret = new Array<Bit>();
     while (num > 0) {
         const remainder = num % 2;
         ret.unshift(remainder === 1);
@@ -61,7 +61,7 @@ export function numToBits(num: number): Array<boolean> {
     return ret;
 }
 
-export function bits5ToRegNum(bits: Array<boolean>, offset: number): number {
+export function bits5ToRegNum(bits: Bit[], offset: number): number {
     return bitsToNum(bits.slice(offset, offset + 5), false);
 }
 
@@ -70,8 +70,8 @@ export function bitsAdd(bits1: Word, bits2: Word): {
     result: Word;
     overflow: boolean;
 }
-export function bitsAdd(bits1: Array<boolean>, bits2: Array<boolean>): {
-    result: Array<boolean>;
+export function bitsAdd(bits1: Bit[], bits2: Bit[]): {
+    result: Bit[];
     overflow: boolean;
 } {
     if (bits1.length !== bits2.length) {
@@ -92,7 +92,7 @@ export function bitsAdd(bits1: Array<boolean>, bits2: Array<boolean>): {
 }
 
 export function bitsAnd(bits1: Word, bits2: Word): Word;
-export function bitsAnd(bits1: Array<boolean>, bits2: Array<boolean>): Array<boolean> {
+export function bitsAnd(bits1: Bit[], bits2: Bit[]): Bit[] {
     if (bits1.length !== bits2.length) {
         throw new Error(`length different in bitsAnd, ${bits1.length}, ${bits2.length}`);
     }
@@ -105,7 +105,7 @@ export function bitsAnd(bits1: Array<boolean>, bits2: Array<boolean>): Array<boo
 }
 
 export function bitsOr(bits1: Word, bits2: Word): Word;
-export function bitsOr(bits1: Array<boolean>, bits2: Array<boolean>): Array<boolean> {
+export function bitsOr(bits1: Bit[], bits2: Bit[]): Bit[] {
     if (bits1.length !== bits2.length) {
         throw new Error(`length different in bitsOr, ${bits1.length}, ${bits2.length}`);
     }
@@ -118,7 +118,7 @@ export function bitsOr(bits1: Array<boolean>, bits2: Array<boolean>): Array<bool
 }
 
 export function bitsXor(bits1: Word, bits2: Word): Word;
-export function bitsXor(bits1: Array<boolean>, bits2: Array<boolean>): Array<boolean> {
+export function bitsXor(bits1: Bit[], bits2: Bit[]): Bit[] {
     if (bits1.length !== bits2.length) {
         throw new Error(`length different in bitsXor, ${bits1.length}, ${bits2.length}`);
     }
@@ -130,7 +130,7 @@ export function bitsXor(bits1: Array<boolean>, bits2: Array<boolean>): Array<boo
     return result;
 }
 
-export function bitsEqual(bits1: Array<boolean>, bits2: Array<boolean>): boolean {
+export function bitsEqual(bits1: Bit[], bits2: Bit[]): boolean {
     if (bits1.length !== bits2.length) {
         throw new Error(`length different in bitsEqual, ${bits1.length}, ${bits2.length}`);
     }
@@ -187,4 +187,34 @@ export function bitsMul(bits1: Word, bits2: Word, signed: boolean): {
         high: <Word>bits.slice(32),
         low: <Word>bits.slice(32)
     };
+}
+
+export function bitsNumFill(bitsOfNum: Bit[], lenToFill: number, signed: boolean): Bit[] {
+    if (bitsOfNum.length > lenToFill) {
+        if (signed) {
+            throw new Error(`length of input bits is larger than the target: ${bitsOfNum.length}, ${lenToFill}`);
+        } else {
+            const first1 = bitsOfNum.indexOf(true);
+            const startIdx = bitsOfNum.length - lenToFill;
+            if (first1 < startIdx) {
+                throw new Error(`length of input bits is larger than the target: ${bitsOfNum.length}, ${lenToFill}`);
+            } else {
+                // for unsigned integer
+                return bitsOfNum.slice(startIdx);
+            }
+        }
+    }
+    return makeArray(lenToFill - bitsOfNum.length, signed ? bitsOfNum[0] : false).concat(bitsOfNum);
+}
+
+export function bitsFrom01Str(strOf01: string): Bit[] {
+    return strOf01.split("").map(s => {
+        if (s === "1") {
+            return true;
+        } else if (s === "0") {
+            return false;
+        } else {
+            throw new Error(`invalid string input, only 0 or 1 are allowed: ${strOf01}`);
+        }
+    })
 }

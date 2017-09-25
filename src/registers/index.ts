@@ -49,8 +49,54 @@ export enum REG {
     RA = 31
 }
 
+export function getRegNumber(regname: string): number {
+    return nameMap.get((regname || "").toLowerCase());
+}
+
+const nameMap = new Map<string, number>();
+nameMap.set("status", REG.STATUS);
+nameMap.set("badvaddr", REG.BADVADDR);
+nameMap.set("cause", REG.CAUSE);
+nameMap.set("epc", REG.EPC);
+nameMap.set("lo", REG.LO);
+nameMap.set("hi", REG.HI);
+nameMap.set("pc", REG.PC);
+nameMap.set("zero", REG.ZERO);
+nameMap.set("at", REG.AT);
+nameMap.set("v0", REG.V0);
+nameMap.set("v1", REG.V1);
+nameMap.set("a0", REG.A0);
+nameMap.set("a1", REG.A1);
+nameMap.set("a2", REG.A2);
+nameMap.set("a3", REG.A3);
+nameMap.set("t0", REG.T0);
+nameMap.set("t1", REG.T1);
+nameMap.set("t2", REG.T2);
+nameMap.set("t3", REG.T3);
+nameMap.set("t4", REG.T4);
+nameMap.set("t5", REG.T5);
+nameMap.set("t6", REG.T6);
+nameMap.set("t7", REG.T7);
+nameMap.set("s0", REG.S0);
+nameMap.set("s1", REG.S1);
+nameMap.set("s2", REG.S2);
+nameMap.set("s3", REG.S3);
+nameMap.set("s4", REG.S4);
+nameMap.set("s5", REG.S5);
+nameMap.set("s6", REG.S6);
+nameMap.set("s7", REG.S7);
+nameMap.set("t8", REG.T8);
+nameMap.set("t9", REG.T9);
+nameMap.set("k0", REG.K0);
+nameMap.set("k1", REG.K1);
+nameMap.set("gp", REG.GP);
+nameMap.set("sp", REG.SP);
+nameMap.set("fp", REG.FP);
+nameMap.set("ra", REG.RA);
+
 export class Registers {
     private _map: Map<number, Register>;
+    private _namemap: Map<string, number>;
     private _word4: Word;
 
     public advancePC(): void {
@@ -84,162 +130,13 @@ export class Registers {
 
     constructor() {
         this._map = new Map<number, Register>();
-        this._map.set(REG.STATUS, {
-            name: "status",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.BADVADDR, {
-            name: "badvaddr",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.CAUSE, {
-            name: "cause",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.EPC, {
-            name: "epc",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.LO, {
-            name: "lo",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.HI, {
-            name: "hi",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.PC, {
-            name: "pc",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.ZERO, {
-            name: "zero",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.AT, {
-            name: "at",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.V0, {
-            name: "v0",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.V1, {
-            name: "v1",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.A0, {
-            name: "a0",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.A1, {
-            name: "a1",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.A2, {
-            name: "a2",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.A3, {
-            name: "a3",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.T0, {
-            name: "t0",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.T1, {
-            name: "t1",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.T2, {
-            name: "t2",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.T3, {
-            name: "t3",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.T4, {
-            name: "t4",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.T5, {
-            name: "t5",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.T6, {
-            name: "t6",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.T7, {
-            name: "t7",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.S0, {
-            name: "s0",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.S1, {
-            name: "s1",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.S2, {
-            name: "s2",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.S3, {
-            name: "s3",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.S4, {
-            name: "s4",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.S5, {
-            name: "s5",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.S6, {
-            name: "s6",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.S7, {
-            name: "s7",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.T8, {
-            name: "t8",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.T9, {
-            name: "t9",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.K0, {
-            name: "k0",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.K1, {
-            name: "k1",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.GP, {
-            name: "gp",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.SP, {
-            name: "sp",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.FP, {
-            name: "fp",
-            value: byte.makeWord0()
-        });
-        this._map.set(REG.RA, {
-            name: "ra",
-            value: byte.makeWord0()
-        });
+        this._namemap = new Map<string, number>();
+        for (let regs of nameMap) {
+            this._map.set(regs[1], {
+                name: regs[0],
+                value: byte.makeWord0()
+            });
+        }
         this._word4 = byte.makeWord0();
         this._word4[29] = true;
     }
