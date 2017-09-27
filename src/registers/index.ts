@@ -105,8 +105,7 @@ export class Registers {
     }
 
     public advancePC16BitsOffset(offset: HalfWord): void {
-        const neg = offset[0];
-        const prefix = neg ? byte.makeTrueArray(14) : byte.makeFalseArray(14);
+        const prefix = byte.makeArray(14, offset[0]);
         this.setVal(REG.PC, byte.bitsAdd(this.getVal(REG.PC), <Word>prefix.concat(offset).concat([false, false])).result);
     }
 

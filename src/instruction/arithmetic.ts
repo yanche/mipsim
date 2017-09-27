@@ -4,7 +4,7 @@ import { Word } from "../def";
 import Memory from "../memory";
 import { Instruction, InstructionFinder } from "./def";
 import { byte, flatten } from "../utility";
-import { InstructionComponentPattern as CPattern, REG as CREG, IMM } from "./pattern";
+import { InstructionComponentPattern as CPattern } from "./pattern";
 import { genParserREG3, genParserREG2IMM16b, genParserREG2, genParserREG2IMM5b } from "./util";
 
 // $d = $s + $t
@@ -234,8 +234,11 @@ export const sllv = new Instruction({
 // shifts a register value right by the shift amount (shamt) and places the value in the destination register.
 // the sign bit is shifted in
 // $d = $t >> h
+// sra $d, $t, h
 export const sra = new Instruction({
+    name: "SRA",
     pattern: "0000 00-- ---t tttt dddd dhhh hh00 0011",
+    compPattern: [CPattern.REG, CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_t = byte.bits5ToRegNum(itrn, 11);
         const reg_d = byte.bits5ToRegNum(itrn, 16);
@@ -244,14 +247,18 @@ export const sra = new Instruction({
         const data = <Word>byte.makeArray(shiftRight, reg_t_data[0]).concat(reg_t_data.slice(0, -shiftRight));
         regs.setVal(reg_d, data);
         regs.advancePC();
-    }
+    },
+    parse: genParserREG2IMM5b("00000000000", "000011")
 });
 
 // shifts a register value right by the shift amount (shamt) and places the value in the destination register
 // zeroes are shifted in
 // $d = $t >> h
+// srl $d, $t, h
 export const srl = new Instruction({
+    name: "SRL",
     pattern: "0000 00-- ---t tttt dddd dhhh hh00 0010",
+    compPattern: [CPattern.REG, CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_t = byte.bits5ToRegNum(itrn, 11);
         const reg_d = byte.bits5ToRegNum(itrn, 16);
@@ -260,14 +267,18 @@ export const srl = new Instruction({
         const data = <Word>byte.makeFalseArray(shiftRight).concat(reg_t_data.slice(0, -shiftRight));
         regs.setVal(reg_d, data);
         regs.advancePC();
-    }
+    },
+    parse: genParserREG2IMM5b("00000000000", "000010")
 });
 
 // shifts a register value right by the amount specified in $s and places the value in the destination register
 // zeroes are shifted in
 // $d = $t >> $s
+// srlv $d, $t, $s
 export const srlv = new Instruction({
+    name: "SRLV",
     pattern: "0000 00ss ssst tttt dddd d000 0000 0110",
+    compPattern: [CPattern.REG, CPattern.REG, CPattern.REG],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -277,13 +288,17 @@ export const srlv = new Instruction({
         const data = <Word>byte.makeFalseArray(shiftRight).concat(reg_t_data.slice(0, -shiftRight));
         regs.setVal(reg_d, data);
         regs.advancePC();
-    }
+    },
+    parse: genParserREG3("000000", "00000000110")
 });
 
 // subtracts two registers and stores the result in a register
 // $d = $s - $t
+// sub $d, $s, $t
 export const sub = new Instruction({
+    name: "SUB",
     pattern: "0000 00ss ssst tttt dddd d000 0010 0010",
+    compPattern: [CPattern.REG, CPattern.REG, CPattern.REG],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         // const reg_s = byte.bits5ToRegNum(itrn, 6);
         // const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -291,13 +306,17 @@ export const sub = new Instruction({
         // const add = byte.bitsAdd(regs.getVal(reg_s), regs.getVal(reg_t));
         // regs.setVal(reg_d, add.result);
         // regs.advancePC();
-    }
+    },
+    parse: genParserREG3("000000", "00000100010")
 });
 
 // subtracts two registers and stores the result in a register
 // $d = $s - $t
+// subu $d, $s, $t
 export const subu = new Instruction({
+    name: "SUBU",
     pattern: "0000 00ss ssst tttt dddd d000 0010 0011",
+    compPattern: [CPattern.REG, CPattern.REG, CPattern.REG],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -311,13 +330,17 @@ export const subu = new Instruction({
         }
         regs.setVal(reg_d, <Word>bits_d);
         regs.advancePC();
-    }
+    },
+    parse: genParserREG3("000000", "00000100011")
 });
 
 // bitwise exclusive ors two registers and stores the result in a register
 // $d = $s ^ $t
+// xor $d, $s, $t
 export const xor = new Instruction({
+    name: "XOR",
     pattern: "0000 00ss ssst tttt dddd d--- --10 0110",
+    compPattern: [CPattern.REG, CPattern.REG, CPattern.REG],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -325,13 +348,16 @@ export const xor = new Instruction({
         const data = byte.bitsXor(regs.getVal(reg_s), regs.getVal(reg_t));
         regs.setVal(reg_d, data);
         regs.advancePC();
-    }
+    },
+    parse: genParserREG3("000000", "00000100110")
 });
 
 // bitwise exclusive ors a register and an immediate value and stores the result in a register
 // $t = $s ^ imm
 export const xori = new Instruction({
+    name: "XORI",
     pattern: "0011 10ss ssst tttt iiii iiii iiii iiii",
+    compPattern: [CPattern.REG, CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -339,7 +365,8 @@ export const xori = new Instruction({
         const data = byte.bitsXor(regs.getVal(reg_s), <Word>byte.makeHalfWord0().concat(imm));
         regs.setVal(reg_t, data);
         regs.advancePC();
-    }
+    },
+    parse: genParserREG2IMM16b("001110", false)
 });
 
 export const finder = new InstructionFinder([

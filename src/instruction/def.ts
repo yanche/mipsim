@@ -84,5 +84,6 @@ export class InstructionFinder {
 
 export const maxUnsignedNum5Bits = Math.pow(2, 5) - 1;
 export const maxUnsignedNum16Bits = Math.pow(2, 16) - 1;
+export const maxUnsignedNum26Bits = Math.pow(2, 26) - 1;
 export const maxSignedNum16Bits = Math.pow(2, 15) - 1;
 export const minSignedNum16Bits = -maxSignedNum16Bits - 1;

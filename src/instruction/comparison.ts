@@ -4,12 +4,17 @@ import { Word } from "../def";
 import Memory from "../memory";
 import { Instruction, InstructionFinder } from "./def";
 import { byte } from "../utility";
+import { InstructionComponentPattern as CPattern } from "./pattern";
+import { genParserREG3, genParserREG2IMM16b } from "./util";
 
 // if $s is less than $t, $d is set to one. It gets zero otherwise
 // if $s < $t $d = 1; else $d = 0;
 // both $s and $t will be treated as signed
+// slt $d, $s, $t
 const slt = new Instruction({
+    name: "SLT",
     pattern: "0000 00ss ssst tttt dddd d000 0010 1010",
+    compPattern: [CPattern.REG, CPattern.REG, CPattern.REG],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -22,14 +27,18 @@ const slt = new Instruction({
             regs.setVal(reg_d, byte.makeWord0());
         }
         regs.advancePC();
-    }
+    },
+    parse: genParserREG3("000000", "00000101010")
 });
 
 // if $s is less than $t, $d is set to one. It gets zero otherwise.
 // if $s < $t $d = 1; else $d = 0;
 // both $s and $t will be treated as unsigned
+// sltu $d, $s, $t
 const sltu = new Instruction({
+    name: "SLTU",
     pattern: "0000 00ss ssst tttt dddd d000 0010 1011",
+    compPattern: [CPattern.REG, CPattern.REG, CPattern.REG],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -42,14 +51,18 @@ const sltu = new Instruction({
             regs.setVal(reg_d, byte.makeWord0());
         }
         regs.advancePC();
-    }
+    },
+    parse: genParserREG3("000000", "00000101011")
 });
 
 // if $s is less than immediate, $t is set to one. It gets zero otherwise
 // if $s < imm $t = 1; else $t = 0;
 // both $s and imm will be treated as signed
+// slti $t, $s, imm
 const slti = new Instruction({
+    name: "SLTI",
     pattern: "0010 10ss ssst tttt iiii iiii iiii iiii",
+    compPattern: [CPattern.REG, CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -61,14 +74,18 @@ const slti = new Instruction({
             regs.setVal(reg_t, byte.makeWord0());
         }
         regs.advancePC();
-    }
+    },
+    parse: genParserREG2IMM16b("001010", true)
 });
 
 // if $s is less than the unsigned immediate, $t is set to one. It gets zero otherwise
 // if $s < imm $t = 1; else $t = 0;
 // both $s and imm will be treated as unsigned
+// sltiu $t, $s, imm
 const sltiu = new Instruction({
+    name: "SLTIU",
     pattern: "0010 11ss ssst tttt iiii iiii iiii iiii",
+    compPattern: [CPattern.REG, CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -80,7 +97,8 @@ const sltiu = new Instruction({
             regs.setVal(reg_t, byte.makeWord0());
         }
         regs.advancePC();
-    }
+    },
+    parse: genParserREG2IMM16b("001011", false)
 });
 
 export const finder = new InstructionFinder([slt, sltu, slti, sltiu]);

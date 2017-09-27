@@ -4,10 +4,15 @@ import { Word, HalfWord } from "../def";
 import Memory from "../memory";
 import { Instruction, InstructionFinder } from "./def";
 import { byte } from "../utility";
+import { InstructionComponentPattern as CPattern } from "./pattern";
+import { genParserREG2IMM16b, genParserREG1IMM16b } from "./util";
 
 // branches if the two registers are equal
+// beq $s, $t, offset
 const beq = new Instruction({
+    name: "BEQ",
     pattern: "0001 00ss ssst tttt iiii iiii iiii iiii",
+    compPattern: [CPattern.REG, CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -17,12 +22,16 @@ const beq = new Instruction({
         } else {
             regs.advancePC();
         }
-    }
+    },
+    parse: genParserREG2IMM16b("000100", true)
 });
 
 // branches if the register is greater than or equal to zero
+// bgez $s, offset
 const bgez = new Instruction({
+    name: "BGEZ",
     pattern: "0000 01ss sss0 0001 iiii iiii iiii iiii",
+    compPattern: [CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         // first bit is zero means it's non-neg number
@@ -32,12 +41,16 @@ const bgez = new Instruction({
         } else {
             regs.advancePC();
         }
-    }
+    },
+    parse: genParserREG1IMM16b("000001", "00001", true)
 });
 
 // branches if the register is greater than or equal to zero and link
+// bgezal $s, offset
 const bgezal = new Instruction({
+    name: "BGEZAL",
     pattern: "0000 01ss sss1 0001 iiii iiii iiii iiii",
+    compPattern: [CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         // first bit is zero means it's non-neg number
@@ -49,12 +62,16 @@ const bgezal = new Instruction({
         } else {
             regs.advancePC();
         }
-    }
+    },
+    parse: genParserREG1IMM16b("000001", "10001", true)
 });
 
 // branches if the register is greater than zero
+// bgtz $s, offset
 const bgtz = new Instruction({
+    name: "BGTZ",
     pattern: "0001 11ss sss0 0000 iiii iiii iiii iiii",
+    compPattern: [CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_s_val = regs.getVal(reg_s);
@@ -66,12 +83,16 @@ const bgtz = new Instruction({
         } else {
             regs.advancePC();
         }
-    }
+    },
+    parse: genParserREG1IMM16b("000111", "00000", true)
 });
 
 // branches if the register is less than or equal to zero
+// blez $s, offset
 const blez = new Instruction({
+    name: "BLEZ",
     pattern: "0001 10ss sss0 0000 iiii iiii iiii iiii",
+    compPattern: [CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_s_val = regs.getVal(reg_s);
@@ -82,12 +103,16 @@ const blez = new Instruction({
         } else {
             regs.advancePC();
         }
-    }
+    },
+    parse: genParserREG1IMM16b("000110", "00000", true)
 });
 
 // branches if the register is less than zero
+// bltz $s, offset
 const bltz = new Instruction({
+    name: "BLTZ",
     pattern: "0000 01ss sss0 0000 iiii iiii iiii iiii",
+    compPattern: [CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         // first bit is one means it's neg number
@@ -97,12 +122,16 @@ const bltz = new Instruction({
         } else {
             regs.advancePC();
         }
-    }
+    },
+    parse: genParserREG1IMM16b("000001", "00000", true)
 });
 
 // branches if the register is less than zero and link
+// bltzal $s, offset
 const bltzal = new Instruction({
+    name: "BLTZAL",
     pattern: "0000 01ss sss1 0000 iiii iiii iiii iiii",
+    compPattern: [CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         // first bit is one means it's neg number
@@ -114,12 +143,16 @@ const bltzal = new Instruction({
         } else {
             regs.advancePC();
         }
-    }
+    },
+    parse: genParserREG1IMM16b("000001", "10000", true)
 });
 
 // branches if the two registers are not equal
+// bne $s, $t, offset
 const bne = new Instruction({
+    name: "BNE",
     pattern: "0001 01ss ssst tttt iiii iiii iiii iiii",
+    compPattern: [CPattern.REG, CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -130,77 +163,8 @@ const bne = new Instruction({
         } else {
             regs.advancePC();
         }
-    }
+    },
+    parse: genParserREG2IMM16b("000101", true)
 });
 
 export const finder = new InstructionFinder([beq, bgez, bgezal, bgtz, blez, bltz, bltzal, bne]);
-
-// // unconditional branch to label lab
-// export class B {
-//     constructor(public lab: string) {
-
-//     }
-// }
-
-// // branch to lab if src1 == src2
-// export class BEQ {
-//     constructor(public src1: Register, public src2: Register | Integer, public lab: string) {
-
-//     }
-// }
-
-// // branch to lab if src1 != src2
-// export class BNE {
-//     constructor(public src1: Register, public src2: Register | Integer, public lab: string) {
-
-//     }
-// }
-
-// // branch to lab if src1 >= 0
-// export class BGEZ {
-//     constructor(public src1: Register, public lab: string) {
-
-//     }
-// }
-
-// // branch to lab if src1 > 0
-// export class BGTZ {
-//     constructor(public src1: Register, public lab: string) {
-
-//     }
-// }
-
-// // branch to lab if src1 <= 0
-// export class BLEZ {
-//     constructor(public src1: Register, public lab: string) {
-
-//     }
-// }
-
-// // branch to lab if src1 < 0
-// export class BLTZ {
-//     constructor(public src1: Register, public lab: string) {
-
-//     }
-// }
-
-// // if src1 >= 0, then put the address of the next instruction into $ra and branch to lab
-// export class BGEZAL {
-//     constructor(public src1: Register, public lab: string) {
-
-//     }
-// }
-
-// // if src1 > 0, then put the address of the next instruction into $ra and branch to lab
-// export class BGTZAL {
-//     constructor(public src1: Register, public lab: string) {
-
-//     }
-// }
-
-// // if src1 < 0, then put the address of the next instruction into $ra and branch to lab
-// export class BLTZAL {
-//     constructor(public src1: Register, public lab: string) {
-
-//     }
-// }
