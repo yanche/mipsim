@@ -218,3 +218,17 @@ export function bitsFrom01Str(strOf01: string): Bit[] {
         }
     })
 }
+
+type Bits4 = [Bit, Bit, Bit, Bit];
+
+export function bits4ToHexString(input: Bits4): string {
+    return bitsToNum(input.slice(0, 4), false).toString(16);
+}
+
+export function byteToHexString(input: Byte): string {
+    return bits4ToHexString(<Bits4>input.slice(0, 4)) + bits4ToHexString(<Bits4>input.slice(4));
+}
+
+export function wordToHexString(input: Word): string {
+    return [0, 8, 16, 24].map(i => byteToHexString(<Byte>input.slice(i, i + 8))).join("");
+}
