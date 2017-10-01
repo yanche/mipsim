@@ -1,6 +1,6 @@
 
 import { Word } from "../def";
-import { REG, IMM } from "./pattern";
+import { REG, IMM, ADDR } from "./pattern";
 import { byte, flatten } from "../utility";
 import { minSignedNum16Bits, maxSignedNum16Bits, maxUnsignedNum16Bits, maxUnsignedNum26Bits, maxUnsignedNum5Bits } from "./def";
 
@@ -75,5 +75,17 @@ export function genParserREG2IMM5b(leadingBits: string, followingBits: string): 
             throw new Error(`unable to encode integer: ${imm} into 5 bits unsigned number`);
         }
         return <Word>byte.bitsFrom01Str(leadingBits).concat(flatten(regbits)).concat(byte.bitsNumFill(byte.numToBits(imm), 5, false)).concat(byte.bitsFrom01Str(followingBits));
+    }
+}
+
+export function genParserREG1Addr16b(leadingBits: string): (components: [REG, ADDR]) => Word {
+    return (components: [REG, ADDR]): Word => {
+        const regbits = byte.bitsNumFill(byte.numToBits(components[0].regNum), 5, false);
+        const addrBaseRegBits = byte.bitsNumFill(byte.numToBits(components[1].regNum), 5, false);
+        const imm = components[1].offset;
+        if (imm > maxSignedNum16Bits || imm < minSignedNum16Bits) {
+            throw new Error(`unable to encode integer: ${imm} into 16 bits signed number`);
+        }
+        return <Word>byte.bitsFrom01Str(leadingBits).concat(addrBaseRegBits).concat(regbits).concat(byte.bitsNumFill(byte.numToBits(imm), 16, true));
     }
 }
