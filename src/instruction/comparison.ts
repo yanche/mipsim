@@ -2,10 +2,10 @@
 import { Registers, REG } from "../registers";
 import { Word } from "../def";
 import Memory from "../memory";
-import { Instruction, InstructionFinder } from "./def";
+import { Instruction } from "./def";
 import { byte } from "../utility";
 import { InstructionComponentPattern as CPattern } from "./pattern";
-import { genParserREG3, genParserREG2IMM16b } from "./util";
+import { genParserREG3, genParserREG2IMM16b, makeInstructionNameMap } from "./util";
 
 // if $s is less than $t, $d is set to one. It gets zero otherwise
 // if $s < $t $d = 1; else $d = 0;
@@ -101,4 +101,4 @@ const sltiu = new Instruction({
     parse: genParserREG2IMM16b("001011", false)
 });
 
-export const finder = new InstructionFinder([slt, sltu, slti, sltiu]);
+export const nameMap = makeInstructionNameMap([slt, sltu, slti, sltiu]);

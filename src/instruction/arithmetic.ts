@@ -2,10 +2,10 @@
 import { Registers, REG } from "../registers";
 import { Word } from "../def";
 import Memory from "../memory";
-import { Instruction, InstructionFinder } from "./def";
+import { Instruction } from "./def";
 import { byte, flatten } from "../utility";
 import { InstructionComponentPattern as CPattern } from "./pattern";
-import { genParserREG3, genParserREG2IMM16b, genParserREG2, genParserREG2IMM5b } from "./util";
+import { genParserREG3, genParserREG2IMM16b, genParserREG2, genParserREG2IMM5b, makeInstructionNameMap } from "./util";
 
 // $d = $s + $t
 // add $d, $s, $t
@@ -369,7 +369,7 @@ export const xori = new Instruction({
     parse: genParserREG2IMM16b("001110", false)
 });
 
-export const finder = new InstructionFinder([
+export const nameMap = makeInstructionNameMap([
     add, addu, addiu, and, andi, divu, div, multu, mult, or, ori,
     sll, sllv, sra, srl, srlv, sub, subu, xor, xori
 ]);

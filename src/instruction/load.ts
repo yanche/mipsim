@@ -2,10 +2,10 @@
 import { Registers, REG } from "../registers";
 import { Word } from "../def";
 import Memory from "../memory";
-import { Instruction, InstructionFinder } from "./def";
+import { Instruction } from "./def";
 import { byte } from "../utility";
 import { InstructionComponentPattern as CPattern } from "./pattern";
-import { genParserREG1IMM16b, genParserREG1Addr16b } from "./util";
+import { genParserREG1IMM16b, genParserREG1Addr16b, makeInstructionNameMap } from "./util";
 
 // a byte is loaded into a register from the specified address
 // $t = MEM[$s + imm]
@@ -64,4 +64,4 @@ const lw = new Instruction({
     parse: genParserREG1Addr16b("100011")
 });
 
-export const finder = new InstructionFinder([lb, lui, lw]);
+export const nameMap = makeInstructionNameMap([lb, lui, lw]);

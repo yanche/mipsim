@@ -1,0 +1,12 @@
+
+user code segment
+0x00400000 .. 0x00440000
+
+user global data segment
+0x10000000 .. 0x10040000
+
+user heap data segment
+0x10040000 .. 
+
+user stack
+0x7ffff7ec .. 0x80000000

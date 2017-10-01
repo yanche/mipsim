@@ -2,8 +2,9 @@
 import { Registers, REG } from "../registers";
 import { Word } from "../def";
 import Memory from "../memory";
-import { Instruction, InstructionFinder } from "./def";
+import { Instruction } from "./def";
 import { byte } from "../utility";
+import { makeInstructionNameMap } from "./util";
 
 // noop, no operation
 // Note: The encoding for a NOOP represents the instruction SLL $0, $0, 0 which has no side effects.
@@ -33,4 +34,4 @@ const syscall = new Instruction({
     parse: () => <Word>byte.makeFalseArray(28).concat([true, true, false, false])
 });
 
-export const finder = new InstructionFinder([noop, syscall]);
+export const nameMap = makeInstructionNameMap([noop, syscall]);

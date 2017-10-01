@@ -2,10 +2,10 @@
 import { REG, Registers } from "../registers";
 import { Word, HalfWord } from "../def";
 import Memory from "../memory";
-import { Instruction, InstructionFinder } from "./def";
+import { Instruction } from "./def";
 import { byte } from "../utility";
 import { InstructionComponentPattern as CPattern } from "./pattern";
-import { genParserREG2IMM16b, genParserREG1IMM16b } from "./util";
+import { genParserREG2IMM16b, genParserREG1IMM16b, makeInstructionNameMap } from "./util";
 
 // branches if the two registers are equal
 // beq $s, $t, offset
@@ -167,4 +167,4 @@ const bne = new Instruction({
     parse: genParserREG2IMM16b("000101", true)
 });
 
-export const finder = new InstructionFinder([beq, bgez, bgezal, bgtz, blez, bltz, bltzal, bne]);
+export const nameMap = makeInstructionNameMap([beq, bgez, bgezal, bgtz, blez, bltz, bltzal, bne]);

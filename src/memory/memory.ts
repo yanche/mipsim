@@ -1,6 +1,6 @@
 
 import { Block } from "./mblock";
-import { Addr, Word, Byte, memBlockSize, Bit } from "../def";
+import { Addr, Word, Byte, HalfWord, memBlockSize, Bit } from "../def";
 import { byte, validate, flatten } from "../utility";
 
 const bsize = Math.log2(memBlockSize);
@@ -22,6 +22,10 @@ export class Memory {
 
     public writeByte(addr: Addr, byte: Byte): void {
         this._blockOp(addr, 1, byte);
+    }
+
+    public writeHalfWord(addr: Addr, halfword: HalfWord): void {
+        this._blockOp(addr, 2, halfword);
     }
 
     public writeWord(addr: Addr, word: Word): void {

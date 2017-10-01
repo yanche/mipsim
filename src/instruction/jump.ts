@@ -2,10 +2,10 @@
 import { Registers, REG } from "../registers";
 import { Word } from "../def";
 import Memory from "../memory";
-import { Instruction, InstructionFinder } from "./def";
+import { Instruction } from "./def";
 import { byte } from "../utility";
 import { InstructionComponentPattern as CPattern } from "./pattern";
-import { genParserREG1, genParserIMM26b } from "./util";
+import { genParserREG1, genParserIMM26b, makeInstructionNameMap } from "./util";
 
 // jumps to the calculated address
 // j target
@@ -49,4 +49,4 @@ const jr = new Instruction({
     parse: genParserREG1("000000", "000000000000000001000")
 });
 
-export const finder = new InstructionFinder([j, jal, jr]);
+export const nameMap = makeInstructionNameMap([j, jal, jr]);

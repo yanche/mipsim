@@ -49,6 +49,10 @@ export class Instruction {
         this._name = options.name.trim().toUpperCase();
     }
 
+    public get name(): string {
+        return this._name;
+    }
+
     public execute(itrn: Word, mem: Memory, regs: Registers): boolean {
         return this._execute(itrn, mem, regs) || false;
     }
@@ -67,18 +71,6 @@ export class Instruction {
             throw new Error(`invalid component part of ${this._name} instruction: ${comp}`);
         }
         return this._parse(components.map((c, idx) => parseComponent(c, this._compPattern[idx])));
-    }
-}
-
-export class InstructionFinder {
-    private _instructions: Instruction[];
-
-    public find(itrn: Word): Instruction {
-        return findFirst(this._instructions, i => i.match(itrn), null);
-    }
-
-    constructor(instructions: Instruction[]) {
-        this._instructions = instructions;
     }
 }
 

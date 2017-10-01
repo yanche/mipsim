@@ -2,10 +2,10 @@
 import { Registers, REG } from "../registers";
 import { Word, Byte } from "../def";
 import Memory from "../memory";
-import { Instruction, InstructionFinder } from "./def";
+import { Instruction } from "./def";
 import { byte } from "../utility";
 import { InstructionComponentPattern as CPattern } from "./pattern";
-import { genParserREG1Addr16b } from "./util";
+import { genParserREG1Addr16b, makeInstructionNameMap } from "./util";
 
 // the least significant byte of $t is stored at the specified address
 // MEM[$s + offset] = (0xff & $t)
@@ -44,4 +44,4 @@ const sw = new Instruction({
     parse: genParserREG1Addr16b("101011")
 });
 
-export const finder = new InstructionFinder([sb, sw]);
+export const nameMap = makeInstructionNameMap([sb, sw]);

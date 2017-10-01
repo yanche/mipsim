@@ -2,10 +2,10 @@
 import { Registers, REG } from "../registers";
 import { Word } from "../def";
 import Memory from "../memory";
-import { Instruction, InstructionFinder } from "./def";
+import { Instruction } from "./def";
 import { byte } from "../utility";
 import { InstructionComponentPattern as CPattern } from "./pattern";
-import { genParserREG1 } from "./util";
+import { genParserREG1, makeInstructionNameMap } from "./util";
 
 // the contents of register HI are moved to the specified register
 // $d = $HI
@@ -37,4 +37,4 @@ const mflo = new Instruction({
     parse: genParserREG1("0000000000000000", "00000010010")
 });
 
-export const finder = new InstructionFinder([mfhi, mflo]);
+export const nameMap = makeInstructionNameMap([mfhi, mflo]);

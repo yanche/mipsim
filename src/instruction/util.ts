@@ -2,7 +2,7 @@
 import { Word } from "../def";
 import { REG, IMM, ADDR } from "./pattern";
 import { byte, flatten } from "../utility";
-import { minSignedNum16Bits, maxSignedNum16Bits, maxUnsignedNum16Bits, maxUnsignedNum26Bits, maxUnsignedNum5Bits } from "./def";
+import { minSignedNum16Bits, maxSignedNum16Bits, maxUnsignedNum16Bits, maxUnsignedNum26Bits, maxUnsignedNum5Bits, Instruction } from "./def";
 
 export function genParserREG1(leadingBits: string, followingBits: string): (components: [REG]) => Word {
     return (components: [REG]): Word => {
@@ -89,4 +89,12 @@ export function genParserREG1Addr16b(leadingBits: string): (components: [REG, AD
         }
         return <Word>byte.bitsFrom01Str(leadingBits).concat(addrBaseRegBits).concat(regbits).concat(byte.bitsNumFill(byte.numToBits(imm), 16, true));
     }
+}
+
+export function makeInstructionNameMap(ins: Instruction[]): Map<string, Instruction> {
+    const nameMap = new Map<string, Instruction>();
+    for (let i of ins) {
+        nameMap.set(i.name, i);
+    }
+    return nameMap;
 }
