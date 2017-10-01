@@ -18,9 +18,10 @@ export function genParserREG2(leadingBits: string, followingBits: string): (comp
     };
 }
 
-export function genParserREG3(leadingBits: string, followingBits: string): (components: [REG, REG, REG]) => Word {
+export function genParserREG3(leadingBits: string, followingBits: string, reposIdx?: [number, number, number]): (components: [REG, REG, REG]) => Word {
     return (components: [REG, REG, REG]): Word => {
-        const regbits = components.map(com => byte.bitsNumFill(byte.numToBits(com.regNum), 5, false));
+        reposIdx = reposIdx || [1, 2, 0];
+        const regbits = reposIdx.map(i => components[i]).map(com => byte.bitsNumFill(byte.numToBits(com.regNum), 5, false));
         return <Word>byte.bitsFrom01Str(leadingBits).concat(flatten(regbits)).concat(byte.bitsFrom01Str(followingBits));
     };
 }

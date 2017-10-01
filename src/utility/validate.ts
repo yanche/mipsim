@@ -8,7 +8,7 @@ export enum NUM_FLAG {
 }
 
 export function num(input: any, flag?: NUM_FLAG): boolean {
-    const isnum = typeof num === "number";
+    const isnum = typeof input === "number";
     const ispos = !(flag & NUM_FLAG.POS) || input > 0;
     const isneg = !(flag & NUM_FLAG.NEG) || input < 0;
     const isnonpos = !(flag & NUM_FLAG.NONPOS) || input <= 0;

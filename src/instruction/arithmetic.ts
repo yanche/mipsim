@@ -228,7 +228,7 @@ export const sllv = new Instruction({
         regs.setVal(reg_d, data);
         regs.advancePC();
     },
-    parse: genParserREG3("000000", "00000000100")
+    parse: genParserREG3("000000", "00000000100", [2, 1, 0])
 });
 
 // shifts a register value right by the shift amount (shamt) and places the value in the destination register.
@@ -289,7 +289,7 @@ export const srlv = new Instruction({
         regs.setVal(reg_d, data);
         regs.advancePC();
     },
-    parse: genParserREG3("000000", "00000000110")
+    parse: genParserREG3("000000", "00000000110", [2, 1, 0])
 });
 
 // subtracts two registers and stores the result in a register
