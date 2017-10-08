@@ -12,25 +12,55 @@ interface CodeContext {
 }
 
 export function parseMIPSCode(codelines: string[]): Memory {
+    const firstInstAddr = parseInt("0x00400000", 16);
     const ctx: CodeContext = {
         textSeg: true, // by default in text segment
         dataPtr: parseInt("0x10000000", 16),
-        textPtr: parseInt("0x00400000", 16),
+        textPtr: firstInstAddr + 4,
         labelMap: new Map<string, number>()
     };
     const mem = new Memory();
     const len = codelines.length;
     let i = 0;
     while (i < len) {
-        parseCodeLine(codelines[i++], ctx, mem);
+        // first loop, label & data segment
+        parseNonTextCodeLine(codelines[i++], ctx, mem);
+    }
+    i = 0;
+    ctx.textSeg = true;
+    ctx.textPtr = firstInstAddr + 4;
+    while (i < len) {
+        // second loop, instruction(text) segment
+        parseTextCodeLine(codelines[i++], ctx, mem);
     }
     if (!ctx.labelMap.has("main")) {
         throw new Error(`main label was not declared`);
     }
+    // first instruction is J main
+    mem.writeWord(numPtrToAddr(firstInstAddr), parse("j main", firstInstAddr, ctx.labelMap));
     return mem;
 }
 
-function parseCodeLine(codeline: string, ctx: CodeContext, mem: Memory): void {
+function parseTextCodeLine(codeline: string, ctx: CodeContext, mem: Memory): void {
+    codeline = (codeline || "").trim();
+    if (codeline.length === 0 || codeline[0] === "#") return; // comment starts with #
+    if (codeline === ".data") {
+        ctx.textSeg = false;
+        return;
+    }
+    if (codeline === ".text") {
+        ctx.textSeg = true;
+        return;
+    }
+    if (ctx.textSeg) {
+        const bits = parse(codeline, ctx.textPtr, ctx.labelMap);
+        mem.writeWord(numPtrToAddr(ctx.textPtr), bits);
+        ctx.textPtr += 4;
+        return;
+    }
+}
+
+function parseNonTextCodeLine(codeline: string, ctx: CodeContext, mem: Memory): void {
     codeline = (codeline || "").trim();
     if (codeline.length === 0 || codeline[0] === "#") return; // comment starts with #
     if (codeline[0] === ".") {
@@ -40,8 +70,7 @@ function parseCodeLine(codeline: string, ctx: CodeContext, mem: Memory): void {
         } else if (codeline === ".text") {
             ctx.textSeg = true;
             return;
-        }
-        else if (!ctx.textSeg) {
+        } else if (!ctx.textSeg) {
             parseDataAssign(codeline, ctx, mem);
             return;
         } else {
@@ -49,24 +78,23 @@ function parseCodeLine(codeline: string, ctx: CodeContext, mem: Memory): void {
         }
     }
     if (codeline[codeline.length - 1] === ":") {
-        // define a label
+        // define a label, case sensitive
         const label = codeline.slice(0, -1);
         if (validate.label(label)) {
             if (ctx.labelMap.has(label)) {
                 throw new Error(`label already delcared: ${label}`);
-            } else if (label === "main" && !ctx.textSeg) {
-                throw new Error(`you can only use label "main" in text segment`);
             } else {
                 ctx.labelMap.set(label, ctx.textSeg ? ctx.textPtr : ctx.dataPtr);
+                return;
             }
         } else {
             throw new Error(`invalid label: ${label}`);
         }
     }
     if (ctx.textSeg) {
-        const bits = parse(codeline, ctx.textPtr, ctx.labelMap);
-        mem.writeWord(numPtrToAddr(ctx.textPtr), bits);
+        // just move the counter but don't process instructions, we need go thru first loop for labels.
         ctx.textPtr += 4;
+        return;
     }
     throw new Error(`unknown codeline in given context: ${codeline}`);
 }
@@ -91,7 +119,7 @@ function parseDataAssign(codeline: string, ctx: CodeContext, mem: Memory): void 
             if (content[0] === '"' && content[content.length - 1] === '"') {
                 const asciiStr = content.slice(1, -1);
                 if (asciiStr.length === 0 || asciiStr === "\\") {
-                    throw new Error("ascii content cannot be empty or only \\: ${asciiStr}");
+                    throw new Error(`ascii content cannot be empty or only \\: ${asciiStr}`);
                 }
                 for (let b of parseAsciiStr(asciiStr)) {
                     mem.writeByte(numPtrToAddr(ctx.dataPtr++), b);

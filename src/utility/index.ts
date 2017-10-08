@@ -46,10 +46,11 @@ export function parseAsciiStr(input: string): Byte[] {
             if (idx < len - 1) {
                 const next = input[idx + 1];
                 const nextch = next.charCodeAt(0);
+                // \x is case sensitive
                 if (next === "x") {
                     const next2nums = input.slice(idx + 2, idx + 4).toLowerCase();
                     if (next2nums.length === 2 && next2nums.split("").every(q => {
-                        const c = q.charCodeAt(0);
+                        const c = q.toLowerCase().charCodeAt(0);
                         return (ch_0 <= c && c <= ch_9) || (ch_a <= c && c <= ch_f);
                     })) {
                         ret.push(<Byte>byte.bitsNumFill(byte.numToBits(parseInt(next2nums, 16)), 8, false));
@@ -77,9 +78,8 @@ export function parseAsciiStr(input: string): Byte[] {
                     ret.push(<Byte>byte.bitsNumFill(byte.numToBits(num), 8, false));
                     idx = tmpidx - 1;
                 } else {
-                    const chcode = escapeMap.get(next);
-                    if (chcode !== undefined) {
-                        ret.push(<Byte>byte.bitsNumFill(byte.numToBits(chcode), 8, false));
+                    if (escapeMap.has(next)) {
+                        ret.push(<Byte>byte.bitsNumFill(byte.numToBits(escapeMap.get(next)), 8, false));
                         ++idx;
                     }
                     // else, ignore the non-matching \
