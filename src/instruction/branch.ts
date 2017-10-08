@@ -12,7 +12,6 @@ import { genParserREG2IMM16b, genParserREG1IMM16b, makeInstructionNameMap } from
 const beq = new Instruction({
     name: "BEQ",
     pattern: "0001 00ss ssst tttt iiii iiii iiii iiii",
-    compPattern: [CPattern.REG, CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -23,7 +22,7 @@ const beq = new Instruction({
             regs.advancePC();
         }
     },
-    parse: genParserREG2IMM16b("000100", true)
+    parser: genParserREG2IMM16b("000100", true)
 });
 
 // branches if the register is greater than or equal to zero
@@ -31,7 +30,6 @@ const beq = new Instruction({
 const bgez = new Instruction({
     name: "BGEZ",
     pattern: "0000 01ss sss0 0001 iiii iiii iiii iiii",
-    compPattern: [CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         // first bit is zero means it's non-neg number
@@ -42,7 +40,7 @@ const bgez = new Instruction({
             regs.advancePC();
         }
     },
-    parse: genParserREG1IMM16b("000001", "00001", true)
+    parser: genParserREG1IMM16b("000001", "00001", true)
 });
 
 // branches if the register is greater than or equal to zero and link
@@ -50,7 +48,6 @@ const bgez = new Instruction({
 const bgezal = new Instruction({
     name: "BGEZAL",
     pattern: "0000 01ss sss1 0001 iiii iiii iiii iiii",
-    compPattern: [CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         // first bit is zero means it's non-neg number
@@ -63,7 +60,7 @@ const bgezal = new Instruction({
             regs.advancePC();
         }
     },
-    parse: genParserREG1IMM16b("000001", "10001", true)
+    parser: genParserREG1IMM16b("000001", "10001", true)
 });
 
 // branches if the register is greater than zero
@@ -71,7 +68,6 @@ const bgezal = new Instruction({
 const bgtz = new Instruction({
     name: "BGTZ",
     pattern: "0001 11ss sss0 0000 iiii iiii iiii iiii",
-    compPattern: [CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_s_val = regs.getVal(reg_s);
@@ -84,7 +80,7 @@ const bgtz = new Instruction({
             regs.advancePC();
         }
     },
-    parse: genParserREG1IMM16b("000111", "00000", true)
+    parser: genParserREG1IMM16b("000111", "00000", true)
 });
 
 // branches if the register is less than or equal to zero
@@ -92,7 +88,6 @@ const bgtz = new Instruction({
 const blez = new Instruction({
     name: "BLEZ",
     pattern: "0001 10ss sss0 0000 iiii iiii iiii iiii",
-    compPattern: [CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_s_val = regs.getVal(reg_s);
@@ -104,7 +99,7 @@ const blez = new Instruction({
             regs.advancePC();
         }
     },
-    parse: genParserREG1IMM16b("000110", "00000", true)
+    parser: genParserREG1IMM16b("000110", "00000", true)
 });
 
 // branches if the register is less than zero
@@ -112,7 +107,6 @@ const blez = new Instruction({
 const bltz = new Instruction({
     name: "BLTZ",
     pattern: "0000 01ss sss0 0000 iiii iiii iiii iiii",
-    compPattern: [CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         // first bit is one means it's neg number
@@ -123,7 +117,7 @@ const bltz = new Instruction({
             regs.advancePC();
         }
     },
-    parse: genParserREG1IMM16b("000001", "00000", true)
+    parser: genParserREG1IMM16b("000001", "00000", true)
 });
 
 // branches if the register is less than zero and link
@@ -131,7 +125,6 @@ const bltz = new Instruction({
 const bltzal = new Instruction({
     name: "BLTZAL",
     pattern: "0000 01ss sss1 0000 iiii iiii iiii iiii",
-    compPattern: [CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         // first bit is one means it's neg number
@@ -144,7 +137,7 @@ const bltzal = new Instruction({
             regs.advancePC();
         }
     },
-    parse: genParserREG1IMM16b("000001", "10000", true)
+    parser: genParserREG1IMM16b("000001", "10000", true)
 });
 
 // branches if the two registers are not equal
@@ -152,7 +145,6 @@ const bltzal = new Instruction({
 const bne = new Instruction({
     name: "BNE",
     pattern: "0001 01ss ssst tttt iiii iiii iiii iiii",
-    compPattern: [CPattern.REG, CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -164,7 +156,7 @@ const bne = new Instruction({
             regs.advancePC();
         }
     },
-    parse: genParserREG2IMM16b("000101", true)
+    parser: genParserREG2IMM16b("000101", true)
 });
 
 export const nameMap = makeInstructionNameMap([beq, bgez, bgezal, bgtz, blez, bltz, bltzal, bne]);

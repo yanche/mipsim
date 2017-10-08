@@ -3,21 +3,22 @@ import { Word } from "../def";
 import Memory from "../memory";
 import { Registers } from "../registers";
 import { findFirst, validate } from "../utility";
-import { InstructionComponentPattern, parseComponent, REG, ADDR, IMM } from "./pattern";
+
+export interface Parser {
+    (components: string, addr: number, labelMap: Map<string, number>): Word;
+}
 
 export class Instruction {
     private _pattern: Array<boolean>;
     private _execute: (itrn: Word, mem: Memory, regs: Registers) => void | boolean;
     private _name: string;
-    private _compPattern: InstructionComponentPattern[];
-    private _parse: (components: Array<REG | ADDR | IMM>) => Word;
+    private _parser: Parser;
 
     constructor(options: {
         name: string;
         pattern: string;
         execute: (itrn: Word, mem: Memory, regs: Registers) => void | boolean;
-        parse: (components: Array<REG | ADDR | IMM>) => Word; // literal instruction components to bits instruction
-        compPattern: InstructionComponentPattern[];
+        parser: Parser;
     }) {
         this._pattern = options.pattern.split("").filter(s => s !== " ").map(s => {
             if (s === "0") {
@@ -34,18 +35,14 @@ export class Instruction {
         if (!options.execute) {
             throw new Error(`execute function is not provided for instruction`);
         }
-        if (!Array.isArray(options.compPattern)) {
-            throw new Error(`component pattern must be provided as an array: ${options.compPattern}`);
-        }
-        if (!options.parse) {
-            throw new Error(`parse function is not provided for instruction`);
+        if (!options.parser) {
+            throw new Error(`parser is not provided for instruction`);
         }
         if (!options.name || options.name.trim().length === 0) {
             throw new Error(`instruction's name is not provided: ${options.name}`);
         }
         this._execute = options.execute;
-        this._compPattern = options.compPattern;
-        this._parse = options.parse;
+        this._parser = options.parser;
         this._name = options.name.trim().toUpperCase();
     }
 
@@ -64,13 +61,8 @@ export class Instruction {
         });
     }
 
-    public parse(comp: string): Word {
-        comp = comp.replace(",", " ");
-        const components = comp.split(" ").filter(x => x.length > 0);
-        if (components.length !== this._compPattern.length) {
-            throw new Error(`invalid component part of ${this._name} instruction: ${comp}`);
-        }
-        return this._parse(components.map((c, idx) => parseComponent(c, this._compPattern[idx])));
+    public parse(comp: string, addr: number, labelMap: Map<string, number>): Word {
+        return this._parser(comp, addr, labelMap);
     }
 }
 

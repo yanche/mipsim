@@ -14,7 +14,6 @@ import { genParserREG3, genParserREG2IMM16b, makeInstructionNameMap } from "./ut
 const slt = new Instruction({
     name: "SLT",
     pattern: "0000 00ss ssst tttt dddd d000 0010 1010",
-    compPattern: [CPattern.REG, CPattern.REG, CPattern.REG],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -28,7 +27,7 @@ const slt = new Instruction({
         }
         regs.advancePC();
     },
-    parse: genParserREG3("000000", "00000101010")
+    parser: genParserREG3("000000", "00000101010")
 });
 
 // if $s is less than $t, $d is set to one. It gets zero otherwise.
@@ -38,7 +37,6 @@ const slt = new Instruction({
 const sltu = new Instruction({
     name: "SLTU",
     pattern: "0000 00ss ssst tttt dddd d000 0010 1011",
-    compPattern: [CPattern.REG, CPattern.REG, CPattern.REG],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -52,7 +50,7 @@ const sltu = new Instruction({
         }
         regs.advancePC();
     },
-    parse: genParserREG3("000000", "00000101011")
+    parser: genParserREG3("000000", "00000101011")
 });
 
 // if $s is less than immediate, $t is set to one. It gets zero otherwise
@@ -62,7 +60,6 @@ const sltu = new Instruction({
 const slti = new Instruction({
     name: "SLTI",
     pattern: "0010 10ss ssst tttt iiii iiii iiii iiii",
-    compPattern: [CPattern.REG, CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -75,7 +72,7 @@ const slti = new Instruction({
         }
         regs.advancePC();
     },
-    parse: genParserREG2IMM16b("001010", true)
+    parser: genParserREG2IMM16b("001010", true)
 });
 
 // if $s is less than the unsigned immediate, $t is set to one. It gets zero otherwise
@@ -85,7 +82,6 @@ const slti = new Instruction({
 const sltiu = new Instruction({
     name: "SLTIU",
     pattern: "0010 11ss ssst tttt iiii iiii iiii iiii",
-    compPattern: [CPattern.REG, CPattern.REG, CPattern.IMM],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -98,7 +94,7 @@ const sltiu = new Instruction({
         }
         regs.advancePC();
     },
-    parse: genParserREG2IMM16b("001011", false)
+    parser: genParserREG2IMM16b("001011", false)
 });
 
 export const nameMap = makeInstructionNameMap([slt, sltu, slti, sltiu]);

@@ -64,7 +64,7 @@ function parseCodeLine(codeline: string, ctx: CodeContext, mem: Memory): void {
         }
     }
     if (ctx.textSeg) {
-        const bits = parse(codeline);
+        const bits = parse(codeline, ctx.textPtr, ctx.labelMap);
         mem.writeWord(numPtrToAddr(ctx.textPtr), bits);
         ctx.textPtr += 4;
     }

@@ -23,11 +23,11 @@ export function execute(mem: Memory, regs: Registers): boolean {
     return instruction.execute(itrn, mem, regs);
 }
 
-export function parse(codeline: string): Word {
+export function parse(codeline: string, instAddr: number, labelMap: Map<string, number>): Word {
     const firstspace = codeline.indexOf(" ");
     const insType = firstspace === -1 ? codeline : codeline.slice(0, firstspace);
     const itrn = finder.findByName(insType);
-    return itrn.parse(firstspace === -1 ? "" : codeline.slice(firstspace + 1));
+    return itrn.parse(firstspace === -1 ? "" : codeline.slice(firstspace + 1), instAddr, labelMap);
 }
 
 class InstructionFinder {

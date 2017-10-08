@@ -10,14 +10,14 @@ export function singleInstructionTest(inst: Instruction, comp: string, regsUnsig
     regNum: REG;
     valToSet: number;
     valToTest: number;
-}[], haltAfter: boolean = false): void {
+}[], haltAfter: boolean = false, instAddr: number = 0, labelMap: Map<string, number> = new Map<string, number>()): void {
     const regs = new Registers();
     for (let r of regsUnsignedValues) {
         if (r.valToSet !== undefined) {
             regs.setVal(r.regNum, <Word>byte.bitsNumFill(byte.numToBits(r.valToSet), 32, false));
         }
     }
-    const halt = inst.execute(inst.parse(comp), new Memory(), regs);
+    const halt = inst.execute(inst.parse(comp, instAddr, labelMap), new Memory(), regs);
     for (let r of regsUnsignedValues) {
         if (r.valToTest !== undefined) {
             assert.strictEqual(byte.bitsToNum(regs.getVal(r.regNum), false), r.valToTest, `register value not expected: ${REG[r.regNum]}`);

@@ -13,7 +13,6 @@ import { genParserREG1Addr16b, makeInstructionNameMap } from "./util";
 const sb = new Instruction({
     name: "SB",
     pattern: "1010 00ss ssst tttt iiii iiii iiii iiii",
-    compPattern: [CPattern.REG, CPattern.ADDR],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -23,15 +22,15 @@ const sb = new Instruction({
         mem.writeByte(addr, <Byte>regs.getVal(reg_t).slice(24));
         regs.advancePC();
     },
-    parse: genParserREG1Addr16b("101000")
+    parser: genParserREG1Addr16b("101000")
 });
 
 // the contents of $t is stored at the specified address
 // MEM[$s + offset] = $t
+// sw $t, offset($s)
 const sw = new Instruction({
     name: "SW",
     pattern: "1010 11ss ssst tttt iiii iiii iiii iiii",
-    compPattern: [CPattern.REG, CPattern.ADDR],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
@@ -41,7 +40,7 @@ const sw = new Instruction({
         mem.writeWord(addr, regs.getVal(reg_t));
         regs.advancePC();
     },
-    parse: genParserREG1Addr16b("101011")
+    parser: genParserREG1Addr16b("101011")
 });
 
 export const nameMap = makeInstructionNameMap([sb, sw]);

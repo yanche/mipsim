@@ -13,13 +13,12 @@ import { genParserREG1, makeInstructionNameMap } from "./util";
 const mfhi = new Instruction({
     name: "MFHI",
     pattern: "0000 0000 0000 0000 dddd d000 0001 0000",
-    compPattern: [CPattern.REG],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_d = byte.bits5ToRegNum(itrn, 16);
         regs.setVal(reg_d, regs.getVal(REG.HI));
         regs.advancePC();
     },
-    parse: genParserREG1("0000000000000000", "00000010000")
+    parser: genParserREG1("0000000000000000", "00000010000")
 });
 
 // the contents of register LO are moved to the specified register
@@ -28,13 +27,12 @@ const mfhi = new Instruction({
 const mflo = new Instruction({
     name: "MFLO",
     pattern: "0000 0000 0000 0000 dddd d000 0001 0010",
-    compPattern: [CPattern.REG, CPattern.ADDR],
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_d = byte.bits5ToRegNum(itrn, 16);
         regs.setVal(reg_d, regs.getVal(REG.LO));
         regs.advancePC();
     },
-    parse: genParserREG1("0000000000000000", "00000010010")
+    parser: genParserREG1("0000000000000000", "00000010010")
 });
 
 export const nameMap = makeInstructionNameMap([mfhi, mflo]);
