@@ -5,7 +5,7 @@ import Memory from "../memory";
 import { Instruction } from "./def";
 import { byte } from "../utility";
 import { InstructionComponentPattern as CPattern } from "./pattern";
-import { genParserREG1, genParserIMM26b, makeInstructionNameMap } from "./util";
+import { genParserREG1, genParserLabelIMM26b, makeInstructionNameMap } from "./util";
 
 // jumps to the calculated address
 // j target
@@ -16,7 +16,7 @@ const j = new Instruction({
         // PC = imm << 2
         regs.setVal(REG.PC, <Word>[false, false, false, false].concat(itrn.slice(6)).concat([false, false]));
     },
-    parser: genParserIMM26b("000010")
+    parser: genParserLabelIMM26b("000010")
 });
 
 // jumps to the calculated address and link
@@ -30,7 +30,7 @@ const jal = new Instruction({
         // PC = imm << 2
         regs.setVal(REG.PC, <Word>[false, false, false, false].concat(itrn.slice(6)).concat([false, false]));
     },
-    parser: genParserIMM26b("000011")
+    parser: genParserLabelIMM26b("000011")
 });
 
 // jumps to the address contained in register $s

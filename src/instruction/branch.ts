@@ -5,7 +5,7 @@ import Memory from "../memory";
 import { Instruction } from "./def";
 import { byte } from "../utility";
 import { InstructionComponentPattern as CPattern } from "./pattern";
-import { genParserREG2IMM16b, genParserREG1IMM16b, makeInstructionNameMap } from "./util";
+import { genParserREG2LabelOffsetIMM16b, genParserREG1LabelOffsetIMM16b, makeInstructionNameMap } from "./util";
 
 // branches if the two registers are equal
 // beq $s, $t, offset
@@ -22,7 +22,7 @@ const beq = new Instruction({
             regs.advancePC();
         }
     },
-    parser: genParserREG2IMM16b("000100", true)
+    parser: genParserREG2LabelOffsetIMM16b("000100")
 });
 
 // branches if the register is greater than or equal to zero
@@ -40,7 +40,7 @@ const bgez = new Instruction({
             regs.advancePC();
         }
     },
-    parser: genParserREG1IMM16b("000001", "00001", true)
+    parser: genParserREG1LabelOffsetIMM16b("000001", "00001")
 });
 
 // branches if the register is greater than or equal to zero and link
@@ -60,7 +60,7 @@ const bgezal = new Instruction({
             regs.advancePC();
         }
     },
-    parser: genParserREG1IMM16b("000001", "10001", true)
+    parser: genParserREG1LabelOffsetIMM16b("000001", "10001")
 });
 
 // branches if the register is greater than zero
@@ -80,7 +80,7 @@ const bgtz = new Instruction({
             regs.advancePC();
         }
     },
-    parser: genParserREG1IMM16b("000111", "00000", true)
+    parser: genParserREG1LabelOffsetIMM16b("000111", "00000")
 });
 
 // branches if the register is less than or equal to zero
@@ -99,7 +99,7 @@ const blez = new Instruction({
             regs.advancePC();
         }
     },
-    parser: genParserREG1IMM16b("000110", "00000", true)
+    parser: genParserREG1LabelOffsetIMM16b("000110", "00000")
 });
 
 // branches if the register is less than zero
@@ -117,7 +117,7 @@ const bltz = new Instruction({
             regs.advancePC();
         }
     },
-    parser: genParserREG1IMM16b("000001", "00000", true)
+    parser: genParserREG1LabelOffsetIMM16b("000001", "00000")
 });
 
 // branches if the register is less than zero and link
@@ -137,7 +137,7 @@ const bltzal = new Instruction({
             regs.advancePC();
         }
     },
-    parser: genParserREG1IMM16b("000001", "10000", true)
+    parser: genParserREG1LabelOffsetIMM16b("000001", "10000")
 });
 
 // branches if the two registers are not equal
@@ -156,7 +156,7 @@ const bne = new Instruction({
             regs.advancePC();
         }
     },
-    parser: genParserREG2IMM16b("000101", true)
+    parser: genParserREG2LabelOffsetIMM16b("000101")
 });
 
 export const nameMap = makeInstructionNameMap([beq, bgez, bgezal, bgtz, blez, bltz, bltzal, bne]);

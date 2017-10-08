@@ -4,7 +4,8 @@ import { getRegNumber } from "../registers";
 export enum InstructionComponentPattern {
     REG = 1,
     IMM = 2,
-    ADDR = 4
+    ADDR = 4,
+    LABEL = 8
 }
 
 export interface REG {
@@ -20,7 +21,9 @@ export interface ADDR {
     offset: number;
 }
 
-export function parseComponent(comp: string, pattern: InstructionComponentPattern): REG | IMM | ADDR {
+export type LABEL = string;
+
+export function parseComponent(comp: string, pattern: InstructionComponentPattern): REG | IMM | ADDR | LABEL {
     if (InstructionComponentPattern.REG & pattern) {
         if (comp[0] === "$") {
             const regnum = getRegNumber(comp.slice(1));
@@ -60,6 +63,9 @@ export function parseComponent(comp: string, pattern: InstructionComponentPatter
                 }
             }
         }
+    }
+    if (InstructionComponentPattern.LABEL & pattern) {
+        return comp;
     }
     throw new Error(`input instruction component does not fall into any given pattern: ${comp}`);
 }
