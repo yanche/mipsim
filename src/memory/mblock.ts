@@ -16,7 +16,7 @@ export class Block {
         if (end >= this.size) {
             throw new Error(`reading block exceeds block boundary, from: ${offset}, to ${end}, block size: ${this.size}`);
         }
-        return this._data.slice(offset * 8, end * 8 + 8);
+        return this._data.slice(offset * 8, end * 8);
     }
 
     public write(offset: number, bits: Bit[]): void {

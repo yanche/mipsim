@@ -27,6 +27,9 @@ export function parse(codeline: string, instAddr: number, labelMap: Map<string, 
     const firstspace = codeline.indexOf(" ");
     const insType = firstspace === -1 ? codeline : codeline.slice(0, firstspace);
     const itrn = finder.findByName(insType);
+    if (!itrn) {
+        throw new Error(`instruction not found: ${insType}`);
+    }
     return itrn.parse(firstspace === -1 ? "" : codeline.slice(firstspace + 1), instAddr, labelMap);
 }
 

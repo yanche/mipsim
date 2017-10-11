@@ -52,7 +52,7 @@ function parseTextCodeLine(codeline: string, ctx: CodeContext, mem: Memory): voi
         ctx.textSeg = true;
         return;
     }
-    if (ctx.textSeg) {
+    if (ctx.textSeg && codeline[codeline.length - 1] !== ":") {
         const bits = parse(codeline, ctx.textPtr, ctx.labelMap);
         mem.writeWord(numPtrToAddr(ctx.textPtr), bits);
         ctx.textPtr += 4;
