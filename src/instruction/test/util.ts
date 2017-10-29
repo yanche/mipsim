@@ -2,9 +2,9 @@
 import * as assert from "assert";
 import { Instruction } from "../def";
 import Memory from "../../memory";
-import { Registers, REG } from "../../registers";
+import { Registers, REG, getRegNumber } from "../../registers";
 import { byte } from "../../utility";
-import { Word } from "../../def";
+import { Word, Bit } from "../../def";
 
 export function singleInstructionTest(inst: Instruction, comp: string, regsUnsignedValues: {
     regNum: REG;
@@ -24,4 +24,16 @@ export function singleInstructionTest(inst: Instruction, comp: string, regsUnsig
         }
     }
     assert.strictEqual(halt, haltAfter, "halt status not expected");
+}
+
+export function stringifyBits(bits: Bit[]): string {
+    return bits.map(d => d ? "1" : "0").join("");
+}
+
+export function getRegBitStr(regname: string): string {
+    return stringifyBits(byte.bitsNumFill(byte.numToBits(getRegNumber(regname)), 5, false));
+}
+
+export function testWordWithBitString(word: Word, bitsString: string): void {
+    assert.strictEqual(bitsString, stringifyBits(word));
 }

@@ -229,16 +229,16 @@ export function byteToHexString(input: Byte): string {
     return bits4ToHexString(<Bits4>input.slice(0, 4)) + bits4ToHexString(<Bits4>input.slice(4));
 }
 
-export function wordToHexString(input: Word): string {
-    return [0, 8, 16, 24].map(i => byteToHexString(<Byte>input.slice(i, i + 8))).join("");
-}
+// export function wordToHexString(input: Word): string {
+//     return [0, 8, 16, 24].map(i => byteToHexString(<Byte>input.slice(i, i + 8))).join("");
+// }
 
 const hexMap = new Map<string, string>();
 for (let i = 0; i < 16; ++i) {
     const binary = bitsNumFill(numToBits(i), 4, false).map(d => d ? "1" : "0").join("");
     hexMap.set(binary, i.toString(16));
 }
-export function wordToHex(word: Word): string {
+export function wordToHexString(word: Word): string {
     const ret: string[] = [];
     for (let i = 0; i < 8; ++i) {
         ret.push(hexMap.get(word.slice(i * 4, i * 4 + 4).map(d => d ? "1" : "0").join("")));

@@ -1,8 +1,9 @@
 
 import * as assert from "assert";
 import { addu, subu } from "../arithmetic";
-import { singleInstructionTest } from "./util";
-import { REG } from "../../registers";
+import { singleInstructionTest, getRegBitStr, testWordWithBitString } from "./util";
+import { REG, getRegNumber } from "../../registers";
+import { byte } from "../../utility";
 
 describe("addu test", () => {
     it("1 + 2 = 3", () => {
@@ -31,7 +32,7 @@ describe("addu test", () => {
             }
         ]);
     });
-    
+
     it("0xFFFFFFFF + 1 = 0", () => {
         // $t0 = $t1 + $t2
         singleInstructionTest(addu, "$t0 $t1 $t2", [
@@ -57,7 +58,7 @@ describe("addu test", () => {
             }
         ]);
     });
-    
+
     it("0xFFFFFFFF + 0xFFFFFFFF = 0xFFFFFFFE", () => {
         // $t0 = $t1 + $t2
         singleInstructionTest(addu, "$t0 $t1 $t2", [
@@ -111,5 +112,14 @@ describe("subu test", () => {
                 valToTest: 2
             }
         ]);
+    });
+});
+
+describe("parsing", () => {
+    // $t0 = $t1 + $t2
+    // addu $t0 $t1 $t2
+    // addu $d, $s, $t
+    it("addu $t0 $t1 $t2", () => {
+        testWordWithBitString(addu.parse("$t0 $t1 $t2", 0, null), `000000${getRegBitStr("t1")}${getRegBitStr("t2")}${getRegBitStr("t0")}00000100001`);
     });
 });

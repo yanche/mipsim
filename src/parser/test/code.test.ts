@@ -13,18 +13,57 @@ describe("simple code parsing test", () => {
         ori $t2 $t2 15
         add $t3 $t1 $t2
         `;
+        const labelMap = new Map<string, number>();
         testMIPSParsing(code, [
             {
                 addr: "0x00400004",
-                data: "0x" + byte.wordToHex(parse("ori $t1 $t1 10", 0, null))
+                data: "0x" + byte.wordToHexString(parse("ori $t1 $t1 10", parseInt("0x00400004", 16), labelMap))
             },
             {
                 addr: "0x00400008",
-                data: "0x" + byte.wordToHex(parse("ori $t2 $t2 15", 0, null))
+                data: "0x" + byte.wordToHexString(parse("ori $t2 $t2 15", parseInt("0x00400008", 16), labelMap))
             },
             {
                 addr: "0x0040000c",
-                data: "0x" + byte.wordToHex(parse("add $t3 $t1 $t2", 0, null))
+                data: "0x" + byte.wordToHexString(parse("add $t3 $t1 $t2", parseInt("0x0040000c", 16), labelMap))
+            }
+        ]);
+    });
+
+    it("branch instructions", () => {
+        const code = `
+        main:
+        beq $t1 $t2 label
+        ori $t1 $t1 10
+        j end
+        label:
+        ori $t2 $t2 15
+        end:
+        add $t3 $t1 $t2
+        `;
+        const labelMap = new Map<string, number>();
+        labelMap.set("label", parseInt("0x00400010", 16));
+        labelMap.set("end", parseInt("0x00400014", 16));
+        testMIPSParsing(code, [
+            {
+                addr: "0x00400004",
+                data: "0x" + byte.wordToHexString(parse("beq $t1 $t2 label", parseInt("0x00400004", 16), labelMap))
+            },
+            {
+                addr: "0x00400008",
+                data: "0x" + byte.wordToHexString(parse("ori $t1 $t1 10", parseInt("0x00400008", 16), labelMap))
+            },
+            {
+                addr: "0x0040000c",
+                data: "0x" + byte.wordToHexString(parse("j end", parseInt("0x0040000c", 16), labelMap))
+            },
+            {
+                addr: "0x00400010",
+                data: "0x" + byte.wordToHexString(parse("ori $t2 $t2 15", parseInt("0x00400010", 16), labelMap))
+            },
+            {
+                addr: "0x00400014",
+                data: "0x" + byte.wordToHexString(parse("add $t3 $t1 $t2", parseInt("0x00400014", 16), labelMap))
             }
         ]);
     });
@@ -79,5 +118,5 @@ function testMIPSParsing(code: string, memExpected: { addr: string, data: string
 function compareByte(actual: Byte, expected: Byte, addr: Word): void {
     const act = actual.map(d => d ? "1" : "0").join("");
     const ext = expected.map(d => d ? "1" : "0").join("");
-    assert.strictEqual(act, ext, `data different at address: 0x${byte.wordToHex(addr)}`);
+    assert.strictEqual(act, ext, `data different at address: 0x${byte.wordToHexString(addr)}`);
 }
