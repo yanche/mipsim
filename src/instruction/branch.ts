@@ -8,7 +8,7 @@ import { InstructionComponentPattern as CPattern } from "./pattern";
 import { genParserREG2LabelOffsetIMM16b, genParserREG1LabelOffsetIMM16b, makeInstructionNameMap } from "./util";
 
 // branches if the two registers are equal
-// beq $s, $t, offset
+// beq $s, $t, label
 const beq = new Instruction({
     name: "BEQ",
     pattern: "0001 00ss ssst tttt iiii iiii iiii iiii",
@@ -26,7 +26,7 @@ const beq = new Instruction({
 });
 
 // branches if the register is greater than or equal to zero
-// bgez $s, offset
+// bgez $s, label
 const bgez = new Instruction({
     name: "BGEZ",
     pattern: "0000 01ss sss0 0001 iiii iiii iiii iiii",
@@ -44,7 +44,7 @@ const bgez = new Instruction({
 });
 
 // branches if the register is greater than or equal to zero and link
-// bgezal $s, offset
+// bgezal $s, label
 const bgezal = new Instruction({
     name: "BGEZAL",
     pattern: "0000 01ss sss1 0001 iiii iiii iiii iiii",
@@ -64,7 +64,7 @@ const bgezal = new Instruction({
 });
 
 // branches if the register is greater than zero
-// bgtz $s, offset
+// bgtz $s, label
 const bgtz = new Instruction({
     name: "BGTZ",
     pattern: "0001 11ss sss0 0000 iiii iiii iiii iiii",
@@ -84,7 +84,7 @@ const bgtz = new Instruction({
 });
 
 // branches if the register is less than or equal to zero
-// blez $s, offset
+// blez $s, label
 const blez = new Instruction({
     name: "BLEZ",
     pattern: "0001 10ss sss0 0000 iiii iiii iiii iiii",
@@ -103,7 +103,7 @@ const blez = new Instruction({
 });
 
 // branches if the register is less than zero
-// bltz $s, offset
+// bltz $s, label
 const bltz = new Instruction({
     name: "BLTZ",
     pattern: "0000 01ss sss0 0000 iiii iiii iiii iiii",
@@ -121,7 +121,7 @@ const bltz = new Instruction({
 });
 
 // branches if the register is less than zero and link
-// bltzal $s, offset
+// bltzal $s, label
 const bltzal = new Instruction({
     name: "BLTZAL",
     pattern: "0000 01ss sss1 0000 iiii iiii iiii iiii",
@@ -141,7 +141,7 @@ const bltzal = new Instruction({
 });
 
 // branches if the two registers are not equal
-// bne $s, $t, offset
+// bne $s, $t, label
 const bne = new Instruction({
     name: "BNE",
     pattern: "0001 01ss ssst tttt iiii iiii iiii iiii",

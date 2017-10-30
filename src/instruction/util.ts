@@ -4,7 +4,7 @@ import { REG, IMM, ADDR, LABEL, InstructionComponentPattern as CPattern, parseCo
 import { byte, flatten } from "../utility";
 import { Parser, minSignedNum16Bits, maxSignedNum16Bits, maxUnsignedNum16Bits, maxUnsignedNum26Bits, maxUnsignedNum5Bits, Instruction } from "./def";
 
-function parseComponents(comp: string, pattern: CPattern[]) {
+export function parseComponents(comp: string, pattern: CPattern[]) {
     comp = comp.replace(",", " ");
     const components = comp.split(" ").filter(x => x.length > 0);
     if (components.length !== pattern.length) {
@@ -110,19 +110,15 @@ export function genParserREG1Addr16b(leadingBits: string): Parser {
 
 export function genParserREG1LabelOffsetIMM16b(leadingBits: string, followingBits: string): Parser {
     return (components: string, addr: number, labelMap: Map<string, number>): Word => {
-        const comps = <[REG, IMM | LABEL]>parseComponents(components, [CPattern.REG, CPattern.IMM | CPattern.LABEL]);
+        const comps = <[REG, LABEL]>parseComponents(components, [CPattern.REG, CPattern.LABEL]);
         const regbits = byte.bitsNumFill(byte.numToBits(comps[0].regNum), 5, false);
         let imm: number;
-        const lastComp = comps[1];
-        if (typeof lastComp === "string") {
-            if (!labelMap.has(lastComp)) {
-                throw new Error(`label not found: ${lastComp}`);
-            }
-            const labelAddr = labelMap.get(lastComp);
-            imm = (labelAddr - addr) / 4;
-        } else {
-            imm = lastComp.num;
+        const label = comps[1];
+        if (!labelMap.has(label)) {
+            throw new Error(`label not found: ${label}`);
         }
+        const labelAddr = labelMap.get(label);
+        imm = (labelAddr - addr) / 4;
         if (imm > maxSignedNum16Bits || imm < minSignedNum16Bits) {
             throw new Error(`unable to encode integer: ${imm} into 16 bits signed number`);
         }
@@ -132,19 +128,15 @@ export function genParserREG1LabelOffsetIMM16b(leadingBits: string, followingBit
 
 export function genParserREG2LabelOffsetIMM16b(leadingBits: string): Parser {
     return (components: string, addr: number, labelMap: Map<string, number>): Word => {
-        const comps = <[REG, REG, IMM | LABEL]>parseComponents(components, [CPattern.REG, CPattern.REG, CPattern.IMM | CPattern.LABEL]);
+        const comps = <[REG, REG, LABEL]>parseComponents(components, [CPattern.REG, CPattern.REG, CPattern.LABEL]);
         const regbits = (<[REG, REG]>comps.slice(0, 2)).map(com => byte.bitsNumFill(byte.numToBits(com.regNum), 5, false));
         let imm: number;
-        const lastComp = comps[2];
-        if (typeof lastComp === "string") {
-            if (!labelMap.has(lastComp)) {
-                throw new Error(`label not found: ${lastComp}`);
-            }
-            const labelAddr = labelMap.get(lastComp);
-            imm = (labelAddr - addr) / 4;
-        } else {
-            imm = lastComp.num;
+        const label = comps[2];
+        if (!labelMap.has(label)) {
+            throw new Error(`label not found: ${label}`);
         }
+        const labelAddr = labelMap.get(label);
+        imm = (labelAddr - addr) / 4;
         if (imm > maxSignedNum16Bits || imm < minSignedNum16Bits) {
             throw new Error(`unable to encode integer: ${imm} into 16 bits signed number`);
         }
@@ -154,17 +146,13 @@ export function genParserREG2LabelOffsetIMM16b(leadingBits: string): Parser {
 
 export function genParserLabelIMM26b(leadingBits: string): Parser {
     return (components: string, addr: number, labelMap: Map<string, number>): Word => {
-        const comps = <[IMM | LABEL]>parseComponents(components, [CPattern.IMM | CPattern.LABEL]);
+        const comps = <[LABEL]>parseComponents(components, [CPattern.LABEL]);
         let imm: number;
-        const lastComp = comps[0];
-        if (typeof lastComp === "string") {
-            if (!labelMap.has(lastComp)) {
-                throw new Error(`label not found: ${lastComp}`);
-            }
-            imm = labelMap.get(lastComp) / 4;
-        } else {
-            imm = lastComp.num;
+        const label = comps[0];
+        if (!labelMap.has(label)) {
+            throw new Error(`label not found: ${label}`);
         }
+        imm = labelMap.get(label) / 4;
         if (imm > maxUnsignedNum26Bits || imm < 0) {
             throw new Error(`unable to encode integer: ${imm} into 16 bits unsigned number`);
         }
