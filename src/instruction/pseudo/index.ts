@@ -3,8 +3,12 @@ import { byte } from "../../utility";
 import { parseComponents } from "../util";
 import { InstructionComponentPattern as CPattern, REG, IMM, LABEL, PSEUDOADDR, PseudoAddr } from "../pattern";
 
-export function pseudoCodeRepl(code: string): string[] | PseudoCodePostProcess {
-    return [code];
+export function pseudoCodeRepl(code: string): PseudoReplResult {
+    code = code.trim();
+    const splitter = code.indexOf(" ");
+    const cmd = splitter === -1 ? code : code.slice(0, splitter);
+    const handler = pseduCodeMap.get(cmd);
+    return handler ? handler(code.slice(splitter + 1).trim()) : { success: true, code: [code] };
 }
 
 export interface PseudoReplResult {

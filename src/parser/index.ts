@@ -1,7 +1,8 @@
 
 import Memory from "../memory";
 import { parse } from "../instruction";
-import { validate, byte, parseAsciiStr } from "../utility";
+import { pseudoCodeRepl, PseudoCodePostProcess } from "../instruction/pseudo";
+import { validate, byte, parseAsciiStr, flatten } from "../utility";
 import { Word, Bit, Byte, HalfWord } from "../def";
 
 interface CodeContext {
@@ -20,18 +21,46 @@ export function parseMIPSCode(codelines: string[]): Memory {
         labelMap: new Map<string, number>()
     };
     const mem = new Memory();
-    const len = codelines.length;
+    let len = codelines.length;
+    const pseudoReplCollector = new Array<string[] | PseudoCodePostProcess>(len);
     let i = 0;
     while (i < len) {
-        // first loop, label & data segment
-        parseNonTextCodeLine(codelines[i++], ctx, mem);
+        const pseudoReplResult = pseudoCodeRepl(codelines[i]);
+        if (!pseudoReplResult.success) {
+            throw new Error(pseudoReplResult.errmsg);
+        }
+        pseudoReplCollector[i] = pseudoReplResult.code;
     }
+    const postReplCodelines = flatten<PseudoCodePostProcess | string>(pseudoReplCollector);
+    len = postReplCodelines.length;
+    i = 0;
+    while (i < len) {
+        // first loop, label & data segment
+        parseNonTextCodeLine(postReplCodelines[i++], ctx, mem);
+    }
+    i = 0;
+    const pseudoPostProcesslCollector = new Array<string[] | string>(len);
+    while (i < len) {
+        // first loop, label & data segment
+        const codeline = postReplCodelines[i];
+        if (typeof codeline !== "string") {
+            if (!ctx.labelMap.has(codeline.label)) {
+                throw new Error(`label not found: ${codeline.label}`);
+            }
+            pseudoPostProcesslCollector[i] = codeline.process(ctx.labelMap.get(codeline.label));
+        } else {
+            pseudoPostProcesslCollector[i] = codeline;
+        }
+        ++i;
+    }
+    const pseudoPostProcessCodelines = flatten(pseudoPostProcesslCollector);
+    len = pseudoPostProcessCodelines.length;
     i = 0;
     ctx.textSeg = true;
     ctx.textPtr = firstInstAddr + 4;
     while (i < len) {
         // second loop, instruction(text) segment
-        parseTextCodeLine(codelines[i++], ctx, mem);
+        parseTextCodeLine(pseudoPostProcessCodelines[i++], ctx, mem);
     }
     if (!ctx.labelMap.has("main")) {
         throw new Error(`main label was not declared`);
@@ -64,43 +93,52 @@ function parseTextCodeLine(codeline: string, ctx: CodeContext, mem: Memory): voi
     }
 }
 
-function parseNonTextCodeLine(codeline: string, ctx: CodeContext, mem: Memory): void {
-    codeline = (codeline || "").trim();
-    if (codeline.length === 0 || codeline[0] === "#") return; // comment starts with #
-    if (codeline[0] === ".") {
-        if (codeline === ".data") {
-            ctx.textSeg = false;
-            return;
-        } else if (codeline === ".text") {
-            ctx.textSeg = true;
-            return;
-        } else if (!ctx.textSeg) {
-            parseDataAssign(codeline, ctx, mem);
-            return;
-        } else {
-            throw new Error(`invalid code line in text segment: ${codeline}`);
-        }
-    }
-    if (codeline[codeline.length - 1] === ":") {
-        // define a label, case sensitive
-        const label = codeline.slice(0, -1);
-        if (validate.label(label)) {
-            if (ctx.labelMap.has(label)) {
-                throw new Error(`label already delcared: ${label}`);
-            } else {
-                ctx.labelMap.set(label, ctx.textSeg ? ctx.textPtr : ctx.dataPtr);
+function parseNonTextCodeLine(codeline: string | PseudoCodePostProcess, ctx: CodeContext, mem: Memory): void {
+    if (typeof codeline === "string") {
+        codeline = (codeline || "").trim();
+        if (codeline.length === 0 || codeline[0] === "#") return; // comment starts with #
+        if (codeline[0] === ".") {
+            if (codeline === ".data") {
+                ctx.textSeg = false;
                 return;
+            } else if (codeline === ".text") {
+                ctx.textSeg = true;
+                return;
+            } else if (!ctx.textSeg) {
+                parseDataAssign(codeline, ctx, mem);
+                return;
+            } else {
+                throw new Error(`invalid code line in text segment: ${codeline}`);
             }
-        } else {
-            throw new Error(`invalid label: ${label}`);
         }
+        if (codeline[codeline.length - 1] === ":") {
+            // define a label, case sensitive
+            const label = codeline.slice(0, -1);
+            if (validate.label(label)) {
+                if (ctx.labelMap.has(label)) {
+                    throw new Error(`label already delcared: ${label}`);
+                } else {
+                    ctx.labelMap.set(label, ctx.textSeg ? ctx.textPtr : ctx.dataPtr);
+                    return;
+                }
+            } else {
+                throw new Error(`invalid label: ${label}`);
+            }
+        }
+        if (ctx.textSeg) {
+            // just move the counter but don't process instructions, we need go thru first loop for labels.
+            ctx.textPtr += 4;
+            return;
+        }
+        throw new Error(`unknown codeline in given context: ${codeline}`);
+    } else {
+        if (ctx.textSeg) {
+            // just move the counter but don't process instructions, we need go thru first loop for labels.
+            ctx.textPtr += 4 * codeline.count;
+            return;
+        }
+        throw new Error(`PseudoCodePostProcess indicates a set of instructions converted from pseudo-instruction, cannot be part of .data segment`);
     }
-    if (ctx.textSeg) {
-        // just move the counter but don't process instructions, we need go thru first loop for labels.
-        ctx.textPtr += 4;
-        return;
-    }
-    throw new Error(`unknown codeline in given context: ${codeline}`);
 }
 
 function numPtrToAddr(ptr: number): Word {
