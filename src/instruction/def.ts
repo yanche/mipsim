@@ -5,7 +5,13 @@ import { Registers } from "../registers";
 import { findFirst, validate } from "../utility";
 
 export interface Parser {
-    (components: string, addr: number, labelMap: Map<string, number>): Word;
+    (components: string, addr: number, labelMap: Map<string, number>): ParseResult;
+}
+
+export interface ParseResult {
+    success: boolean;
+    errmsg?: string;
+    word?: Word;
 }
 
 export class Instruction {
@@ -61,7 +67,7 @@ export class Instruction {
         });
     }
 
-    public parse(comp: string, addr: number, labelMap: Map<string, number>): Word {
+    public parse(comp: string, addr: number, labelMap: Map<string, number>): ParseResult {
         return this._parser(comp, addr, labelMap);
     }
 }

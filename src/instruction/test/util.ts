@@ -17,7 +17,7 @@ export function singleInstructionTest(inst: Instruction, comp: string, regsUnsig
             regs.setVal(r.regNum, <Word>byte.bitsNumFill(byte.numToBits(r.valToSet), 32, false));
         }
     }
-    const halt = inst.execute(inst.parse(comp, instAddr, labelMap), new Memory(), regs);
+    const halt = inst.execute(inst.parse(comp, instAddr, labelMap).word, new Memory(), regs);
     for (let r of regsUnsignedValues) {
         if (r.valToTest !== undefined) {
             assert.strictEqual(byte.bitsToNum(regs.getVal(r.regNum), false), r.valToTest, `register value not expected: ${REG[r.regNum]}`);

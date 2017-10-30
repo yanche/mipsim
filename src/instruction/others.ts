@@ -15,7 +15,7 @@ const noop = new Instruction({
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         regs.advancePC();
     },
-    parser: () => byte.makeWord0()
+    parser: () => { return { success: true, word: byte.makeWord0() }; }
 });
 
 // generates a software interrupt
@@ -29,7 +29,7 @@ const syscall = new Instruction({
         }
         regs.advancePC();
     },
-    parser: () => <Word>byte.makeFalseArray(28).concat([true, true, false, false])
+    parser: () => { return { success: true, word: <Word>byte.makeFalseArray(28).concat([true, true, false, false]) }; }
 });
 
 export const nameMap = makeInstructionNameMap([noop, syscall]);

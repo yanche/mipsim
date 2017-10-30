@@ -17,15 +17,15 @@ describe("simple code parsing test", () => {
         testMIPSParsing(code, [
             {
                 addr: "0x00400004",
-                data: "0x" + byte.wordToHexString(parse("ori $t1 $t1 10", parseInt("0x00400004", 16), labelMap))
+                data: "0x" + byte.wordToHexString(parse("ori $t1 $t1 10", parseInt("0x00400004", 16), labelMap).word)
             },
             {
                 addr: "0x00400008",
-                data: "0x" + byte.wordToHexString(parse("ori $t2 $t2 15", parseInt("0x00400008", 16), labelMap))
+                data: "0x" + byte.wordToHexString(parse("ori $t2 $t2 15", parseInt("0x00400008", 16), labelMap).word)
             },
             {
                 addr: "0x0040000c",
-                data: "0x" + byte.wordToHexString(parse("add $t3 $t1 $t2", parseInt("0x0040000c", 16), labelMap))
+                data: "0x" + byte.wordToHexString(parse("add $t3 $t1 $t2", parseInt("0x0040000c", 16), labelMap).word)
             }
         ]);
     });
@@ -47,23 +47,23 @@ describe("simple code parsing test", () => {
         testMIPSParsing(code, [
             {
                 addr: "0x00400004",
-                data: "0x" + byte.wordToHexString(parse("beq $t1 $t2 label", parseInt("0x00400004", 16), labelMap))
+                data: "0x" + byte.wordToHexString(parse("beq $t1 $t2 label", parseInt("0x00400004", 16), labelMap).word)
             },
             {
                 addr: "0x00400008",
-                data: "0x" + byte.wordToHexString(parse("ori $t1 $t1 10", parseInt("0x00400008", 16), labelMap))
+                data: "0x" + byte.wordToHexString(parse("ori $t1 $t1 10", parseInt("0x00400008", 16), labelMap).word)
             },
             {
                 addr: "0x0040000c",
-                data: "0x" + byte.wordToHexString(parse("j end", parseInt("0x0040000c", 16), labelMap))
+                data: "0x" + byte.wordToHexString(parse("j end", parseInt("0x0040000c", 16), labelMap).word)
             },
             {
                 addr: "0x00400010",
-                data: "0x" + byte.wordToHexString(parse("ori $t2 $t2 15", parseInt("0x00400010", 16), labelMap))
+                data: "0x" + byte.wordToHexString(parse("ori $t2 $t2 15", parseInt("0x00400010", 16), labelMap).word)
             },
             {
                 addr: "0x00400014",
-                data: "0x" + byte.wordToHexString(parse("add $t3 $t1 $t2", parseInt("0x00400014", 16), labelMap))
+                data: "0x" + byte.wordToHexString(parse("add $t3 $t1 $t2", parseInt("0x00400014", 16), labelMap).word)
             }
         ]);
     });

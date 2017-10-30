@@ -12,6 +12,7 @@ import { nameMap as loadNameMap } from "./load";
 import { nameMap as moveNameMap } from "./move";
 import { nameMap as othersNameMap } from "./others";
 import { nameMap as storeNameMap } from "./store";
+import { ParseResult } from "./def";
 
 // return true: halt, false: continue
 export function execute(mem: Memory, regs: Registers): boolean {
@@ -23,7 +24,7 @@ export function execute(mem: Memory, regs: Registers): boolean {
     return instruction.execute(itrn, mem, regs);
 }
 
-export function parse(codeline: string, instAddr: number, labelMap: Map<string, number>): Word {
+export function parse(codeline: string, instAddr: number, labelMap: Map<string, number>): ParseResult {
     const firstspace = codeline.indexOf(" ");
     const insType = firstspace === -1 ? codeline : codeline.slice(0, firstspace);
     const itrn = finder.findByName(insType);

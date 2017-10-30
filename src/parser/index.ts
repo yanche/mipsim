@@ -37,7 +37,7 @@ export function parseMIPSCode(codelines: string[]): Memory {
         throw new Error(`main label was not declared`);
     }
     // first instruction is J main
-    mem.writeWord(numPtrToAddr(firstInstAddr), parse("j main", firstInstAddr, ctx.labelMap));
+    mem.writeWord(numPtrToAddr(firstInstAddr), parse("j main", firstInstAddr, ctx.labelMap).word);
     return mem;
 }
 
@@ -53,7 +53,11 @@ function parseTextCodeLine(codeline: string, ctx: CodeContext, mem: Memory): voi
         return;
     }
     if (ctx.textSeg && codeline[codeline.length - 1] !== ":") {
-        const bits = parse(codeline, ctx.textPtr, ctx.labelMap);
+        const parseResult = parse(codeline, ctx.textPtr, ctx.labelMap);
+        if (!parseResult.success) {
+            throw new Error(parseResult.errmsg);
+        }
+        const bits = parseResult.word;
         mem.writeWord(numPtrToAddr(ctx.textPtr), bits);
         ctx.textPtr += 4;
         return;
