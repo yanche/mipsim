@@ -32,4 +32,14 @@ const syscall = new Instruction({
     parser: () => { return { success: true, word: <Word>byte.makeFalseArray(28).concat([true, true, false, false]) }; }
 });
 
-export const nameMap = makeInstructionNameMap([noop, syscall]);
+// generates a software interrupt
+const break0 = new Instruction({
+    name: "BREAK",
+    pattern: "0000 0000 0000 0000 0000 0000 0000 1101",
+    execute: (itrn: Word, mem: Memory, regs: Registers) => {
+        throw new Error(`break instruction is not implemented yet`)
+    },
+    parser: () => { return { success: true, word: <Word>byte.makeFalseArray(28).concat([true, true, false, true]) }; }
+});
+
+export const nameMap = makeInstructionNameMap([noop, syscall, break0]);

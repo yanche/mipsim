@@ -11,7 +11,7 @@ export interface ParseComponentsResult<T> {
 }
 
 export function parseComponents<T extends (REG | IMM | ADDR | LABEL | PSEUDOADDR)[]>(comp: string, pattern: CPattern[]): ParseComponentsResult<T> {
-    comp = comp.replace(",", " ");
+    comp = comp.replace(/,/g, " ");
     const components = comp.split(" ").filter(x => x.length > 0);
     if (components.length !== pattern.length) {
         return {
@@ -145,16 +145,24 @@ export function genParserREG1Addr16b(leadingBits: string): Parser {
 }
 
 export function genParserREG1LabelOffsetIMM16b(leadingBits: string, followingBits: string): Parser {
-    return (components: string, addr: number, labelMap: Map<string, number>): ParseResult => {
-        return processComponents<[REG, LABEL]>(components, [CPattern.REG, CPattern.LABEL], (comps: [REG, LABEL]) => {
+    return (components: string, addr: number, labelMap: Map<string, number>, generated?: boolean): ParseResult => {
+        return processComponents<[REG, LABEL | IMM]>(components, [CPattern.REG, CPattern.LABEL | CPattern.IMM], (comps: [REG, LABEL | IMM]) => {
             const regbits = byte.bitsNumFill(byte.numToBits(comps[0].regNum), 5, false);
             let imm: number;
             const label = comps[1];
-            if (!labelMap.has(label)) {
-                throw new Error(`label not found: ${label}`);
+            if (typeof label === "string") {
+                if (!labelMap.has(label)) {
+                    throw new Error(`label not found: ${label}`);
+                }
+                const labelAddr = labelMap.get(label);
+                imm = (labelAddr - addr) / 4;
+            } else {
+                if (generated) {
+                    imm = label.num;
+                } else {
+                    throw new Error(`branch instruction only accept a label as target address, input is an immediate number: ${label.num}`);
+                }
             }
-            const labelAddr = labelMap.get(label);
-            imm = (labelAddr - addr) / 4;
             if (imm > maxSignedNum16Bits || imm < minSignedNum16Bits) {
                 throw new Error(`unable to encode integer: ${imm} into 16 bits signed number`);
             }
@@ -164,16 +172,24 @@ export function genParserREG1LabelOffsetIMM16b(leadingBits: string, followingBit
 }
 
 export function genParserREG2LabelOffsetIMM16b(leadingBits: string): Parser {
-    return (components: string, addr: number, labelMap: Map<string, number>): ParseResult => {
-        return processComponents<[REG, REG, LABEL]>(components, [CPattern.REG, CPattern.REG, CPattern.LABEL], (comps: [REG, REG, LABEL]) => {
+    return (components: string, addr: number, labelMap: Map<string, number>, generated?: boolean): ParseResult => {
+        return processComponents<[REG, REG, LABEL | IMM]>(components, [CPattern.REG, CPattern.REG, CPattern.LABEL | CPattern.IMM], (comps: [REG, REG, LABEL | IMM]) => {
             const regbits = (<[REG, REG]>comps.slice(0, 2)).map(com => byte.bitsNumFill(byte.numToBits(com.regNum), 5, false));
             let imm: number;
             const label = comps[2];
-            if (!labelMap.has(label)) {
-                throw new Error(`label not found: ${label}`);
+            if (typeof label === "string") {
+                if (!labelMap.has(label)) {
+                    throw new Error(`label not found: ${label}`);
+                }
+                const labelAddr = labelMap.get(label);
+                imm = (labelAddr - addr) / 4;
+            } else {
+                if (generated) {
+                    imm = label.num;
+                } else {
+                    throw new Error(`branch instruction only accept a label as target address, input is an immediate number: ${label.num}`);
+                }
             }
-            const labelAddr = labelMap.get(label);
-            imm = (labelAddr - addr) / 4;
             if (imm > maxSignedNum16Bits || imm < minSignedNum16Bits) {
                 throw new Error(`unable to encode integer: ${imm} into 16 bits signed number`);
             }
@@ -183,14 +199,22 @@ export function genParserREG2LabelOffsetIMM16b(leadingBits: string): Parser {
 }
 
 export function genParserLabelIMM26b(leadingBits: string): Parser {
-    return (components: string, addr: number, labelMap: Map<string, number>): ParseResult => {
-        return processComponents<[LABEL]>(components, [CPattern.LABEL], (comps: [LABEL]) => {
+    return (components: string, addr: number, labelMap: Map<string, number>, generated?: boolean): ParseResult => {
+        return processComponents<[LABEL | IMM]>(components, [CPattern.LABEL | CPattern.IMM], (comps: [LABEL | IMM]) => {
             let imm: number;
             const label = comps[0];
-            if (!labelMap.has(label)) {
-                throw new Error(`label not found: ${label}`);
+            if (typeof label === "string") {
+                if (!labelMap.has(label)) {
+                    throw new Error(`label not found: ${label}`);
+                }
+                imm = labelMap.get(label) / 4;
+            } else {
+                if (generated) {
+                    imm = label.num;
+                } else {
+                    throw new Error(`branch instruction only accept a label as target address, input is an immediate number: ${label.num}`);
+                }
             }
-            imm = labelMap.get(label) / 4;
             if (imm > maxUnsignedNum26Bits || imm < 0) {
                 throw new Error(`unable to encode integer: ${imm} into 16 bits unsigned number`);
             }

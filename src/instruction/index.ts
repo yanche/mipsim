@@ -24,14 +24,14 @@ export function execute(mem: Memory, regs: Registers): boolean {
     return instruction.execute(itrn, mem, regs);
 }
 
-export function parse(codeline: string, instAddr: number, labelMap: Map<string, number>): ParseResult {
+export function parse(codeline: string, instAddr: number, labelMap: Map<string, number>, generated?: boolean): ParseResult {
     const firstspace = codeline.indexOf(" ");
     const insType = firstspace === -1 ? codeline : codeline.slice(0, firstspace);
     const itrn = finder.findByName(insType);
     if (!itrn) {
         throw new Error(`instruction not found: ${insType}`);
     }
-    return itrn.parse(firstspace === -1 ? "" : codeline.slice(firstspace + 1), instAddr, labelMap);
+    return itrn.parse(firstspace === -1 ? "" : codeline.slice(firstspace + 1), instAddr, labelMap, generated);
 }
 
 class InstructionFinder {

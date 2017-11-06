@@ -1,0 +1,2 @@
+instruction validation, e.g. cannot assign to $r0
+

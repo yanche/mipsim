@@ -15,7 +15,7 @@ export enum REG {
     LO = -3,
     HI = -2,
     PC = -1,
-    ZERO = 0,
+    R0 = 0,
     AT = 1,
     V0 = 2,
     V1 = 3,
@@ -61,7 +61,7 @@ nameMap.set("epc", REG.EPC);
 nameMap.set("lo", REG.LO);
 nameMap.set("hi", REG.HI);
 nameMap.set("pc", REG.PC);
-nameMap.set("zero", REG.ZERO);
+nameMap.set("r0", REG.R0);
 nameMap.set("at", REG.AT);
 nameMap.set("v0", REG.V0);
 nameMap.set("v1", REG.V1);

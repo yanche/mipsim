@@ -1,33 +1,19 @@
 
-import { parse } from "../../instruction";
-import { parseMIPSCode } from "../index";
-import { byte, flatten } from "../../utility";
-import { Word, Bit, Byte } from "../../def";
-import * as assert from "assert";
+import { testMIPSParsing2 } from "./util";
 
 describe("simple code parsing test", () => {
     it("simple instructions", () => {
         const code = `
         main:
-        ori $t1 $t1 10
-        ori $t2 $t2 15
+        ori $t1 $r0 10
+        ori $t2 $r0 15
         add $t3 $t1 $t2
         `;
-        const labelMap = new Map<string, number>();
-        testMIPSParsing(code, [
-            {
-                addr: "0x00400004",
-                data: "0x" + byte.wordToHexString(parse("ori $t1 $t1 10", parseInt("0x00400004", 16), labelMap).word)
-            },
-            {
-                addr: "0x00400008",
-                data: "0x" + byte.wordToHexString(parse("ori $t2 $t2 15", parseInt("0x00400008", 16), labelMap).word)
-            },
-            {
-                addr: "0x0040000c",
-                data: "0x" + byte.wordToHexString(parse("add $t3 $t1 $t2", parseInt("0x0040000c", 16), labelMap).word)
-            }
-        ]);
+        testMIPSParsing2(code, [
+            "ori $t1 $r0 10",
+            "ori $t2 $r0 15",
+            "add $t3 $t1 $t2"
+        ], "0x00400004", new Map<string, number>());
     });
 
     it("branch instructions", () => {
@@ -44,79 +30,137 @@ describe("simple code parsing test", () => {
         const labelMap = new Map<string, number>();
         labelMap.set("label", parseInt("0x00400010", 16));
         labelMap.set("end", parseInt("0x00400014", 16));
-        testMIPSParsing(code, [
-            {
-                addr: "0x00400004",
-                data: "0x" + byte.wordToHexString(parse("beq $t1 $t2 label", parseInt("0x00400004", 16), labelMap).word)
-            },
-            {
-                addr: "0x00400008",
-                data: "0x" + byte.wordToHexString(parse("ori $t1 $t1 10", parseInt("0x00400008", 16), labelMap).word)
-            },
-            {
-                addr: "0x0040000c",
-                data: "0x" + byte.wordToHexString(parse("j end", parseInt("0x0040000c", 16), labelMap).word)
-            },
-            {
-                addr: "0x00400010",
-                data: "0x" + byte.wordToHexString(parse("ori $t2 $t2 15", parseInt("0x00400010", 16), labelMap).word)
-            },
-            {
-                addr: "0x00400014",
-                data: "0x" + byte.wordToHexString(parse("add $t3 $t1 $t2", parseInt("0x00400014", 16), labelMap).word)
-            }
-        ]);
+        testMIPSParsing2(code, [
+            "beq $t1 $t2 label",
+            "ori $t1 $t1 10",
+            "j end",
+            "ori $t2 $t2 15", // 0x00400010
+            "add $t3 $t1 $t2" // 0x00400014
+        ], "0x00400004", labelMap);
     });
 });
 
+describe("pseudo instructions", () => {
+    it("abs", () => {
+        const code = `
+            main:
+            abs $t0, $t1
+            `;
+        testMIPSParsing2(code, [
+            "addu $t0, $r0, $t1",
+            "bgez $t1, 8",
+            "sub $t0, $r0, $t1"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
 
+    it("div(u)", () => {
+        const code = `
+            main:
+            div $t0, $t1, $t3
+            divu $t0, $t1, $t3
+            `;
+        testMIPSParsing2(code, [
+            "bne $t3, $r0, 8",
+            "break",
+            "div $t1, $t3",
+            "mflo $t0",
+            "bne $t3, $r0, 8",
+            "break",
+            "divu $t1, $t3",
+            "mflo $t0"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
 
-const ch_0 = "0".charCodeAt(0);
-const ch_9 = "9".charCodeAt(0);
-const ch_a = "a".charCodeAt(0);
-const ch_f = "f".charCodeAt(0);
-function testMIPSParsing(code: string, memExpected: { addr: string, data: string }[]): void {
-    const codelines = code.replace("\r", "").split("\n").map(s => s.trim()).filter(s => s.length);
-    const mem = parseMIPSCode(codelines);
-    for (let m of memExpected) {
-        const addrNum = parseInt(m.addr, 16);
-        if (m.data.length === 0 || m.addr.length === 0 || isNaN(addrNum)) {
-            throw new Error(`invalid mem addr or data: ${m.addr}, ${m.data}`);
-        }
-        // addr must be hex, leading 0x is optional
-        let addrWord = <Word>byte.bitsNumFill(byte.numToBits(addrNum), 32, false);
-        const data = m.data;
-        let membits: Bit[];
-        if (data.slice(0, 2) === "0x") {
-            // hexical
-            const ds = data.slice(2).toLowerCase().split("");
-            if (ds.length % 2 !== 0 || !ds.every(s => {
-                const ch = s.charCodeAt(0);
-                return (ch_0 <= ch && ch <= ch_9) || (ch_a <= ch && ch <= ch_f);
-            })) {
-                throw new Error(`data in hexical must consists of 0-9a-fA-F and length%2 must be 0: ${data}`);
-            }
-            membits = flatten(ds.map(s => byte.bitsNumFill(byte.numToBits(parseInt(s, 16)), 4, false)));
-        } else {
-            // binary
-            const ds = data.split("");
-            if (ds.length % 8 !== 0 || ds.some(s => s !== "0" && s !== "1")) {
-                throw new Error(`data in binary must consists of 0 or 1 and length%8 must be 0: ${data}`);
-            }
-            membits = ds.map(s => s === "1");
-        }
-        let idx = 0;
-        while (idx < membits.length) {
-            compareByte(mem.readByte(addrWord), <Byte>membits.slice(idx, idx + 8), addrWord);
-            // addr += 1
-            addrWord = <Word>byte.bitsAdd(addrWord, <Word>byte.makeFalseArray(31).concat([true])).result;
-            idx += 8;
-        }
-    }
-}
+    it("mul", () => {
+        const code = `
+            main:
+            mul $t0, $t1, $t3
+            `;
+        testMIPSParsing2(code, [
+            "mult $t1, $t3",
+            "mflo $t0",
+        ], "0x00400004", new Map<string, number>(), true);
+    });
 
-function compareByte(actual: Byte, expected: Byte, addr: Word): void {
-    const act = actual.map(d => d ? "1" : "0").join("");
-    const ext = expected.map(d => d ? "1" : "0").join("");
-    assert.strictEqual(act, ext, `data different at address: 0x${byte.wordToHexString(addr)}`);
-}
+    it("mulo", () => {
+        const code = `
+            main:
+            mulo $t0, $t1, $t3
+            `;
+        testMIPSParsing2(code, [
+            "mult $t1, $t3",
+            "mfhi $at",
+            "mflo $t0",
+            "sra $t0, $t0, 31",
+            "beq $at, $t0, 8",
+            "break",
+            "mflo $t0"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+
+    it("neg(u)", () => {
+        const code = `
+            main:
+            neg $t0, $t1
+            negu $t0, $t1
+            `;
+        testMIPSParsing2(code, [
+            "sub $t0, $r0, $t1",
+            "subu $t0, $r0, $t1"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+    
+    it("not", () => {
+        const code = `
+            main:
+            not $t0, $t1
+            `;
+        testMIPSParsing2(code, [
+            "xor $t0, $t1, $r0"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+    
+    it("rem(u)", () => {
+        const code = `
+            main:
+            rem $t0, $t1, $t2
+            remu $t0, $t1, $t2
+            `;
+        testMIPSParsing2(code, [
+            "bne $t2, $r0, 8",
+            "break",
+            "div $t1, $t2",
+            "mfhi $t0",
+            "bne $t2, $r0, 8",
+            "break",
+            "divu $t1, $t2",
+            "mfhi $t0"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+    
+    it("rol", () => {
+        const code = `
+            main:
+            rol $t0, $t1, $t2
+            `;
+        testMIPSParsing2(code, [
+            `subu $at, $r0, $t2`,
+            `srlv $at, $t1, $at`,
+            `sllv $t0, $t1, $t2`,
+            `or $t0, $t0, $at`
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+    
+    it("ror", () => {
+        const code = `
+            main:
+            ror $t0, $t1, $t2
+            `;
+        testMIPSParsing2(code, [
+            `subu $at, $r0, $t2`,
+            `sllv $at, $t1, $at`,
+            `srlv $t0, $t1, $t2`,
+            `or $t0, $t0, $at`
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+});

@@ -5,7 +5,7 @@ import { Registers } from "../registers";
 import { findFirst, validate } from "../utility";
 
 export interface Parser {
-    (components: string, addr: number, labelMap: Map<string, number>): ParseResult;
+    (components: string, addr: number, labelMap: Map<string, number>, generated?: boolean): ParseResult;
 }
 
 export interface ParseResult {
@@ -67,8 +67,8 @@ export class Instruction {
         });
     }
 
-    public parse(comp: string, addr: number, labelMap: Map<string, number>): ParseResult {
-        return this._parser(comp, addr, labelMap);
+    public parse(comp: string, addr: number, labelMap: Map<string, number>, generated?: boolean): ParseResult {
+        return this._parser(comp, addr, labelMap, generated);
     }
 }
 

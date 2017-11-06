@@ -8,11 +8,12 @@ export function pseudoCodeRepl(code: string): PseudoReplResult {
     const splitter = code.indexOf(" ");
     const cmd = splitter === -1 ? code : code.slice(0, splitter);
     const handler = pseduCodeMap.get(cmd);
-    return handler ? handler(code.slice(splitter + 1).trim()) : { success: true, code: [code] };
+    return handler ? handler(code.slice(splitter + 1).trim()) : { success: true, native: true, code: [code] };
 }
 
 export interface PseudoReplResult {
     success: boolean;
+    native?: boolean;
     errmsg?: string;
     code?: string[] | PseudoCodePostProcess;
 }
@@ -33,7 +34,7 @@ function abs(components: string) {
         return [
             `addu ${reg_d}, $r0, ${reg_s}`,
             `bgez ${reg_s}, 8`,
-            `sub ${reg_d}, $r0, ${reg_s}`
+            `sub ${reg_d}, $r0, ${reg_s}` // this may overflow
         ];
     });
 }
@@ -65,7 +66,7 @@ function mul(components: string) {
         const reg_s = "$" + comps[1].regName;
         const reg_t = "$" + comps[2].regName;
         return [
-            `mult ${reg_s}, ${reg_d}`,
+            `mult ${reg_s}, ${reg_t}`,
             `mflo ${reg_d}`
         ];
     });
@@ -79,7 +80,7 @@ function mulo(components: string) {
         const reg_s = "$" + comps[1].regName;
         const reg_t = "$" + comps[2].regName;
         return [
-            `mult ${reg_s}, ${reg_d}`,
+            `mult ${reg_s}, ${reg_t}`,
             `mfhi $at`,
             `mflo ${reg_d}`,
             `sra ${reg_d}, ${reg_d}, 31`,
@@ -112,7 +113,7 @@ function not(components: string) {
         const reg_d = "$" + comps[0].regName;
         const reg_s = "$" + comps[1].regName;
         return [
-            `nor ${reg_d}, ${reg_s}, $r0`
+            `xor ${reg_d}, ${reg_s}, $r0`
         ];
     });
 }
