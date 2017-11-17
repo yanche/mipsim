@@ -49,7 +49,7 @@ export const addiu = new Instruction({
         regs.setVal(reg_t, add.result);
         regs.advancePC();
     },
-    parser: genParserREG2IMM16b("001001", true)
+    parser: genParserREG2IMM16b("001001")
 });
 
 // $d = $s & $t
@@ -80,7 +80,7 @@ export const andi = new Instruction({
         regs.setVal(reg_t, and);
         regs.advancePC();
     },
-    parser: genParserREG2IMM16b("001100", false)
+    parser: genParserREG2IMM16b("001100")
 });
 
 // divides $s by $t and stores the quotient in $LO and the remainder in $HI
@@ -178,7 +178,7 @@ export const ori = new Instruction({
         regs.setVal(reg_t, or);
         regs.advancePC();
     },
-    parser: genParserREG2IMM16b("001101", false)
+    parser: genParserREG2IMM16b("001101")
 });
 
 // shifts a register value left by the shift amount listed in the instruction and places the result in a third register.
@@ -346,7 +346,7 @@ export const xori = new Instruction({
         regs.setVal(reg_t, data);
         regs.advancePC();
     },
-    parser: genParserREG2IMM16b("001110", false)
+    parser: genParserREG2IMM16b("001110")
 });
 
 export const nameMap = makeInstructionNameMap([

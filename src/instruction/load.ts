@@ -39,7 +39,7 @@ const lui = new Instruction({
         regs.setVal(reg_t, <Word>imm.concat(byte.makeHalfWord0()));
         regs.advancePC();
     },
-    parser: genParserREG1IMM16b("00111100000", "", false)
+    parser: genParserREG1IMM16b("00111100000")
 });
 
 // a word is loaded into a register from the specified address

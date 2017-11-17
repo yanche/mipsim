@@ -109,7 +109,7 @@ describe("pseudo instructions", () => {
             "subu $t0, $r0, $t1"
         ], "0x00400004", new Map<string, number>(), true);
     });
-    
+
     it("not", () => {
         const code = `
             main:
@@ -119,7 +119,7 @@ describe("pseudo instructions", () => {
             "xor $t0, $t1, $r0"
         ], "0x00400004", new Map<string, number>(), true);
     });
-    
+
     it("rem(u)", () => {
         const code = `
             main:
@@ -137,30 +137,216 @@ describe("pseudo instructions", () => {
             "mfhi $t0"
         ], "0x00400004", new Map<string, number>(), true);
     });
-    
+
     it("rol", () => {
         const code = `
             main:
             rol $t0, $t1, $t2
             `;
         testMIPSParsing2(code, [
-            `subu $at, $r0, $t2`,
-            `srlv $at, $t1, $at`,
-            `sllv $t0, $t1, $t2`,
-            `or $t0, $t0, $at`
+            "subu $at, $r0, $t2",
+            "srlv $at, $t1, $at",
+            "sllv $t0, $t1, $t2",
+            "or $t0, $t0, $at"
         ], "0x00400004", new Map<string, number>(), true);
     });
-    
+
     it("ror", () => {
         const code = `
             main:
             ror $t0, $t1, $t2
             `;
         testMIPSParsing2(code, [
-            `subu $at, $r0, $t2`,
-            `sllv $at, $t1, $at`,
-            `srlv $t0, $t1, $t2`,
-            `or $t0, $t0, $at`
+            "subu $at, $r0, $t2",
+            "sllv $at, $t1, $at",
+            "srlv $t0, $t1, $t2",
+            "or $t0, $t0, $at"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+
+    it("seq", () => {
+        const code = `
+            main:
+            seq $t0, $t1, $t2
+            `;
+        testMIPSParsing2(code, [
+            "beq $t2, $t1, 12",
+            "ori $t0, $r0, 0",
+            "beq $r0, $r0, 8",
+            "ori $t0, $r0, 1"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+
+    it("sne", () => {
+        const code = `
+            main:
+            sne $t0, $t1, $t2
+            `;
+        testMIPSParsing2(code, [
+            "beq $t2, $t1, 12",
+            "ori $t0, $r0, 1",
+            "beq $r0, $r0, 8",
+            "ori $t0, $r0, 0"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+
+    it("sge(u)", () => {
+        const code = `
+            main:
+            sge $t0, $t1, $t2
+            sgeu $t0, $t1, $t2
+            `;
+        testMIPSParsing2(code, [
+            "bne $t2, $t1, 12",
+            "ori $t0, $r0, 1",
+            "beq $r0, $r0, 8",
+            "slt $t0, $t2, $t1",
+            "bne $t2, $t1, 12",
+            "ori $t0, $r0, 1",
+            "beq $r0, $r0, 8",
+            "sltu $t0, $t2, $t1"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+
+    it("sgt(u)", () => {
+        const code = `
+            main:
+            sgt $t0, $t1, $t2
+            sgtu $t0, $t1, $t2
+            `;
+        testMIPSParsing2(code, [
+            "slt $t0, $t2, $t1",
+            "sltu $t0, $t2, $t1"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+
+    it("sle(u)", () => {
+        const code = `
+            main:
+            sle $t0, $t1, $t2
+            sleu $t0, $t1, $t2
+            `;
+        testMIPSParsing2(code, [
+            "bne $t2, $t1, 12",
+            "ori $t0, $r0, 1",
+            "beq $r0, $r0, 8",
+            "slt $t0, $t1, $t2",
+            "bne $t2, $t1, 12",
+            "ori $t0, $r0, 1",
+            "beq $r0, $r0, 8",
+            "sltu $t0, $t1, $t2"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+
+    it("bge(u)", () => {
+        const code = `
+            main:
+            bge $t0, $t1, end
+            bgeu $t0, $t1, end
+            end:
+            add $t0, $t1, $t2
+            `;
+        const labelMap = new Map<string, number>();
+        labelMap.set("end", parseInt("0x00400014", 16));
+        testMIPSParsing2(code, [
+            "slt $at, $t0, $t1",
+            "beq $at, $r0, 12",
+            "sltu $at, $t0, $t1",
+            "beq $at, $r0, 4",
+            "add $t0, $t1, $t2"
+        ], "0x00400004", labelMap, true);
+    });
+
+    it("bgt(u)", () => {
+        const code = `
+            main:
+            bgt $t0, $t1, end
+            bgtu $t0, $t1, end
+            end:
+            add $t0, $t1, $t2
+            `;
+        const labelMap = new Map<string, number>();
+        labelMap.set("end", parseInt("0x00400014", 16));
+        testMIPSParsing2(code, [
+            "slt $at, $t1, $t0",
+            "bne $at, $r0, 12",
+            "sltu $at, $t1, $t0",
+            "bne $at, $r0, 4",
+            "add $t0, $t1, $t2"
+        ], "0x00400004", labelMap, true);
+    });
+
+    it("ble(u)", () => {
+        const code = `
+            main:
+            ble $t0, $t1, end
+            bleu $t0, $t1, end
+            end:
+            add $t0, $t1, $t2
+            `;
+        const labelMap = new Map<string, number>();
+        labelMap.set("end", parseInt("0x00400014", 16));
+        testMIPSParsing2(code, [
+            "slt $at, $t1, $t0",
+            "beq $at, $r0, 12",
+            "sltu $at, $t1, $t0",
+            "beq $at, $r0, 4",
+            "add $t0, $t1, $t2"
+        ], "0x00400004", labelMap, true);
+    });
+    
+    it("blt(u)", () => {
+        const code = `
+            main:
+            blt $t0, $t1, end
+            bltu $t0, $t1, end
+            end:
+            add $t0, $t1, $t2
+            `;
+        const labelMap = new Map<string, number>();
+        labelMap.set("end", parseInt("0x00400014", 16));
+        testMIPSParsing2(code, [
+            "slt $at, $t0, $t1",
+            "bne $at, $r0, 12",
+            "sltu $at, $t0, $t1",
+            "bne $at, $r0, 4",
+            "add $t0, $t1, $t2"
+        ], "0x00400004", labelMap, true);
+    });
+    
+    it("beqz", () => {
+        const code = `
+            main:
+            beqz $t0, main
+            `;
+        testMIPSParsing2(code, [
+            "beq $t0, $r0, 0"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+    
+    it("bnez", () => {
+        const code = `
+            main:
+            bnez $t0, main
+            `;
+        testMIPSParsing2(code, [
+            "bne $t0, $r0, 0"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+    
+    it("li", () => {
+        const code = `
+            main:
+            li $t0, 100
+            li $t1, 655400
+            li $t0, -10
+            `;
+        testMIPSParsing2(code, [
+            "ori $t0, $r0, 100",
+            "lui $t1, 10",
+            "ori $t1, $t1, 40",
+            "lui $t1, -1",
+            "ori $t1, $t1, -10"
         ], "0x00400004", new Map<string, number>(), true);
     });
 });

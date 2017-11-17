@@ -72,7 +72,7 @@ const slti = new Instruction({
         }
         regs.advancePC();
     },
-    parser: genParserREG2IMM16b("001010", true)
+    parser: genParserREG2IMM16b("001010")
 });
 
 // if $s is less than the unsigned immediate, $t is set to one. It gets zero otherwise
@@ -94,7 +94,7 @@ const sltiu = new Instruction({
         }
         regs.advancePC();
     },
-    parser: genParserREG2IMM16b("001011", false)
+    parser: genParserREG2IMM16b("001011")
 });
 
 export const nameMap = makeInstructionNameMap([slt, sltu, slti, sltiu]);

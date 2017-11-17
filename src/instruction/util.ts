@@ -1,5 +1,5 @@
 
-import { Word } from "../def";
+import { Word, Bit } from "../def";
 import { REG, IMM, ADDR, LABEL, PSEUDOADDR, InstructionComponentPattern as CPattern, parseComponent } from "./pattern";
 import { byte, flatten } from "../utility";
 import { Parser, minSignedNum16Bits, maxSignedNum16Bits, maxUnsignedNum16Bits, maxUnsignedNum26Bits, maxUnsignedNum5Bits, Instruction, ParseResult } from "./def";
@@ -69,49 +69,24 @@ export function genParserREG3(leadingBits: string, followingBits: string, reposI
     };
 }
 
-// one 26 bits signed integer (in J instruction)
-export function genParserIMM26b(leadingBits: string): Parser {
-    return (components: string): ParseResult => {
-        return processComponents<[IMM]>(components, [CPattern.IMM], (comps: [IMM]) => {
-            const imm = comps[0].num;
-            if (imm > maxUnsignedNum26Bits || imm < 0) {
-                throw new Error(`unable to encode integer: ${imm} into 16 bits unsigned number`);
-            }
-            return <Word>byte.bitsFrom01Str(leadingBits).concat(byte.bitsNumFill(byte.numToBits(imm), 26, false));
-        });
-    };
-}
-
-// 2 registers and one 16 bits signed integer
-export function genParserREG2IMM16b(leadingBits: string, signed: boolean): Parser {
+// 2 registers and one 16 bits integer
+export function genParserREG2IMM16b(leadingBits: string): Parser {
     return (components: string): ParseResult => {
         return processComponents<[REG, REG, IMM]>(components, [CPattern.REG, CPattern.REG, CPattern.IMM], (comps: [REG, REG, IMM]) => {
             const regbits = (<[REG, REG]>comps.slice(0, 2)).map(com => byte.bitsNumFill(byte.numToBits(com.regNum), 5, false));
             const imm = comps[2].num;
-            if (signed && (imm > maxSignedNum16Bits || imm < minSignedNum16Bits)) {
-                throw new Error(`unable to encode integer: ${imm} into 16 bits signed number`);
-            }
-            if (!signed && (imm > maxUnsignedNum16Bits || imm < 0)) {
-                throw new Error(`unable to encode integer: ${imm} into 16 bits unsigned number`);
-            }
-            return <Word>byte.bitsFrom01Str(leadingBits).concat(flatten(regbits)).concat(byte.bitsNumFill(byte.numToBits(imm), 16, signed));
+            return <Word>byte.bitsFrom01Str(leadingBits).concat(flatten(regbits)).concat(encodeIMM(imm, 16));
         });
     };
 }
 
-// 1 registers and one 16 bits signed integer
-export function genParserREG1IMM16b(leadingBits: string, followingBits: string, signed: boolean): Parser {
+// 1 registers and one 16 bits integer
+export function genParserREG1IMM16b(leadingBits: string): Parser {
     return (components: string): ParseResult => {
         return processComponents<[REG, IMM]>(components, [CPattern.REG, CPattern.IMM], (comps: [REG, IMM]) => {
             const regbits = byte.bitsNumFill(byte.numToBits(comps[0].regNum), 5, false);
             const imm = comps[1].num;
-            if (signed && (imm > maxSignedNum16Bits || imm < minSignedNum16Bits)) {
-                throw new Error(`unable to encode integer: ${imm} into 16 bits signed number`);
-            }
-            if (!signed && (imm > maxUnsignedNum16Bits || imm < 0)) {
-                throw new Error(`unable to encode integer: ${imm} into 16 bits unsigned number`);
-            }
-            return <Word>byte.bitsFrom01Str(leadingBits).concat(regbits).concat(byte.bitsFrom01Str(followingBits)).concat(byte.bitsNumFill(byte.numToBits(imm), 16, signed));
+            return <Word>byte.bitsFrom01Str(leadingBits).concat(regbits).concat(encodeIMM(imm, 16));
         });
     };
 }
@@ -122,10 +97,7 @@ export function genParserREG2IMM5b(leadingBits: string, followingBits: string): 
         return processComponents<[REG, REG, IMM]>(components, [CPattern.REG, CPattern.REG, CPattern.IMM], (comps: [REG, REG, IMM]) => {
             const regbits = (<[REG, REG]>comps.slice(0, 2)).map(com => byte.bitsNumFill(byte.numToBits(com.regNum), 5, false));
             const imm = comps[2].num;
-            if (imm > maxUnsignedNum5Bits || imm < 0) {
-                throw new Error(`unable to encode integer: ${imm} into 5 bits unsigned number`);
-            }
-            return <Word>byte.bitsFrom01Str(leadingBits).concat(flatten(regbits)).concat(byte.bitsNumFill(byte.numToBits(imm), 5, false)).concat(byte.bitsFrom01Str(followingBits));
+            return <Word>byte.bitsFrom01Str(leadingBits).concat(flatten(regbits)).concat(encodeIMM(imm, 5)).concat(byte.bitsFrom01Str(followingBits));
         });
     };
 }
@@ -136,10 +108,7 @@ export function genParserREG1Addr16b(leadingBits: string): Parser {
             const regbits = byte.bitsNumFill(byte.numToBits(comps[0].regNum), 5, false);
             const addrBaseRegBits = byte.bitsNumFill(byte.numToBits(comps[1].regNum), 5, false);
             const imm = comps[1].offset;
-            if (imm > maxSignedNum16Bits || imm < minSignedNum16Bits) {
-                throw new Error(`unable to encode integer: ${imm} into 16 bits signed number`);
-            }
-            return <Word>byte.bitsFrom01Str(leadingBits).concat(addrBaseRegBits).concat(regbits).concat(byte.bitsNumFill(byte.numToBits(imm), 16, true));
+            return <Word>byte.bitsFrom01Str(leadingBits).concat(addrBaseRegBits).concat(regbits).concat(encodeIMM(imm, 16));
         });
     };
 }
@@ -158,15 +127,15 @@ export function genParserREG1LabelOffsetIMM16b(leadingBits: string, followingBit
                 imm = (labelAddr - addr) / 4;
             } else {
                 if (generated) {
-                    imm = label.num;
+                    if (label.num % 4) {
+                        throw new Error(`offset of branch instruction must be a multiple of 4: ${label.num}`);
+                    }
+                    imm = label.num / 4;
                 } else {
                     throw new Error(`branch instruction only accept a label as target address, input is an immediate number: ${label.num}`);
                 }
             }
-            if (imm > maxSignedNum16Bits || imm < minSignedNum16Bits) {
-                throw new Error(`unable to encode integer: ${imm} into 16 bits signed number`);
-            }
-            return <Word>byte.bitsFrom01Str(leadingBits).concat(regbits).concat(byte.bitsFrom01Str(followingBits)).concat(byte.bitsNumFill(byte.numToBits(imm), 16, true));
+            return <Word>byte.bitsFrom01Str(leadingBits).concat(regbits).concat(byte.bitsFrom01Str(followingBits)).concat(encodeIMM(imm, 16));
         });
     };
 }
@@ -185,15 +154,15 @@ export function genParserREG2LabelOffsetIMM16b(leadingBits: string): Parser {
                 imm = (labelAddr - addr) / 4;
             } else {
                 if (generated) {
-                    imm = label.num;
+                    if (label.num % 4) {
+                        throw new Error(`offset of branch instruction must be a multiple of 4: ${label.num}`);
+                    }
+                    imm = label.num / 4;
                 } else {
                     throw new Error(`branch instruction only accept a label as target address, input is an immediate number: ${label.num}`);
                 }
             }
-            if (imm > maxSignedNum16Bits || imm < minSignedNum16Bits) {
-                throw new Error(`unable to encode integer: ${imm} into 16 bits signed number`);
-            }
-            return <Word>byte.bitsFrom01Str(leadingBits).concat(flatten(regbits)).concat(byte.bitsNumFill(byte.numToBits(imm), 16, true));
+            return <Word>byte.bitsFrom01Str(leadingBits).concat(flatten(regbits)).concat(encodeIMM(imm, 16));
         });
     };
 }
@@ -210,15 +179,15 @@ export function genParserLabelIMM26b(leadingBits: string): Parser {
                 imm = labelMap.get(label) / 4;
             } else {
                 if (generated) {
-                    imm = label.num;
+                    if (label.num % 4) {
+                        throw new Error(`offset of branch instruction must be a multiple of 4: ${label.num}`);
+                    }
+                    imm = label.num / 4;
                 } else {
                     throw new Error(`branch instruction only accept a label as target address, input is an immediate number: ${label.num}`);
                 }
             }
-            if (imm > maxUnsignedNum26Bits || imm < 0) {
-                throw new Error(`unable to encode integer: ${imm} into 16 bits unsigned number`);
-            }
-            return <Word>byte.bitsFrom01Str(leadingBits).concat(byte.bitsNumFill(byte.numToBits(imm), 26, false));
+            return <Word>byte.bitsFrom01Str(leadingBits).concat(encodeIMM(imm, 26));
         });
     };
 }
@@ -229,4 +198,15 @@ export function makeInstructionNameMap(ins: Instruction[]): Map<string, Instruct
         nameMap.set(i.name, i);
     }
     return nameMap;
+}
+
+function encodeIMM(imm: number, finLen: number): Bit[] {
+    let immBits = byte.numToBits(imm);
+    if (immBits.length === (finLen + 1) && !immBits[0]) {
+        immBits = immBits.slice(1);
+    }
+    if (immBits.length > finLen) {
+        throw new Error(`unable to encode integer: ${imm} into ${finLen} bits number`);
+    }
+    return byte.bitsNumFill(immBits, finLen, true);
 }
