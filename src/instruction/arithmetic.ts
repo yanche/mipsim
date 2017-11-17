@@ -38,6 +38,17 @@ export const addu = new Instruction({
 });
 
 // $t = $s + imm
+// addi $t, $s, imm
+export const addi = new Instruction({
+    name: "ADDI",
+    pattern: "0010 00ss ssst tttt iiii iiii iiii iiii",
+    execute: (itrn: Word, mem: Memory, regs: Registers) => {
+        // NOT IMPLEMENTED
+    },
+    parser: genParserREG2IMM16b("001000")
+});
+
+// $t = $s + imm
 // addiu $t, $s, imm
 export const addiu = new Instruction({
     name: "ADDIU",
@@ -350,6 +361,6 @@ export const xori = new Instruction({
 });
 
 export const nameMap = makeInstructionNameMap([
-    add, addu, addiu, and, andi, divu, div, multu, mult, or, ori,
+    add, addu, addi, addiu, and, andi, divu, div, multu, mult, or, ori,
     sll, sllv, sra, srl, srlv, sub, subu, xor, xori
 ]);

@@ -48,16 +48,20 @@ export function numToBits(num: number): Bit[] {
         throw new Error(`input for numToBits must be an integer: ${num}`);
     }
     let neg = num < 0;
-    if (neg) {
-        num = -num - 1;
-    }
+    num = Math.abs(num);
     let ret = new Array<Bit>();
     while (num > 0) {
         const remainder = num % 2;
         ret.unshift(remainder === 1);
         num = (num - remainder) / 2;
     }
-    ret.unshift(neg ? true : false);
+    // sign bit
+    ret.unshift(false);
+    if (neg) {
+        let i = ret.length - 1;
+        while (!ret[i--] && i >= 0);
+        while (i >= 0) { ret[i] = !ret[i]; --i; }
+    }
     return ret;
 }
 

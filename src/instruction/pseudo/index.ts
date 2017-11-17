@@ -358,9 +358,18 @@ function la(components: string) {
             // li $t0, imm
             return li(components).code;
         } else if (addr.type === PseudoAddr.CONST_REG || addr.type === PseudoAddr.REG) {
-            return [
-                `addi ${reg_s}, $${addr.regName}, ${addr.num || 0}`
-            ];
+            const num = addr.num || 0;
+            const numBits = byte.numToBits(num);
+            if (numBits.length > 16) {
+                // long IMM
+                const liConv = <string[]>li(`$at, ${num}`).code;
+                return liConv.concat(`add ${reg_s}, $${addr.regName}, $at`);
+            } else {
+                // short IMM
+                return [
+                    `addi ${reg_s}, $${addr.regName}, ${num}`
+                ];
+            }
         } else if (addr.type === PseudoAddr.LABEL || addr.type === PseudoAddr.LABEL_CONST) {
             return <PseudoCodePostProcess>{
                 count: 2,

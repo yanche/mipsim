@@ -339,14 +339,99 @@ describe("pseudo instructions", () => {
             main:
             li $t0, 100
             li $t1, 655400
-            li $t0, -10
+            li $t2, -10
+            li $t3, -655400
+            li $t4, 65535
             `;
         testMIPSParsing2(code, [
             "ori $t0, $r0, 100",
             "lui $t1, 10",
             "ori $t1, $t1, 40",
-            "lui $t1, -1",
-            "ori $t1, $t1, -10"
+            "lui $t2, -1",
+            "ori $t2, $t2, -10",
+            "lui $t3, -11",
+            "ori $t3, $t3, -40",
+            "ori $t4, $r0, -1"
         ], "0x00400004", new Map<string, number>(), true);
     });
+    
+    it("move", () => {
+        const code = `
+            main:
+            move $t0, $t1
+            `;
+        testMIPSParsing2(code, [
+            "addu $t0, $r0, $t1"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+    
+    it("la (reg)", () => {
+        const code = `
+            main:
+            la $t0, ($t1)
+            `;
+        testMIPSParsing2(code, [
+            "addi $t0, $t1, 0"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+    
+    it("la const, equivalent to li", () => {
+        const code = `
+            main:
+            la $t1, 100
+            la $t2, 655400
+            la $t3, -10
+            la $t4, -655400
+            la $t5, 65535
+            `;
+        testMIPSParsing2(code, [
+            "ori $t1, $r0, 100",
+            "lui $t2, 10",
+            "ori $t2, $t2, 40",
+            "lui $t3, -1",
+            "ori $t3, $t3, -10",
+            "lui $t4, -11",
+            "ori $t4, $t4, -40",
+            "ori $t5, $r0, -1"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+    
+    it("la const(reg)", () => {
+        const code = `
+            main:
+            la $t0, 100($t4)
+            la $t1, 655400($t4)
+            la $t2, -10($t4)
+            la $t3, -655400($t4)
+            la $t5, 65535($t4)
+            `;
+        testMIPSParsing2(code, [
+            "addi $t0, $t4, 100",
+            "lui $at, 10",
+            "ori $at, $at, 40",
+            "add $t1, $t4, $at",
+            "addi $t2, $t4, -10",
+            "lui $at, -11",
+            "ori $at, $at, -40",
+            "add $t3, $t4, $at",
+            "ori $at, $r0, -1",
+            "add $t5, $t4, $at",
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+    
+    // it("la", () => {
+    //     const code = `
+    //         main:
+    //         la $t3, label
+    //         la $t0, label + 100
+    //         la $t1, label + 655400
+    //         la $t2, label - 10
+    //         la $t0, label + 100($t3)
+    //         la $t1, label + 655400($t3)
+    //         la $t2, label - 10($t3)
+    //         `;
+    //     testMIPSParsing2(code, [
+    //         "addu $t0, $r0, $t1"
+    //     ], "0x00400004", new Map<string, number>(), true);
+    // });
 });
