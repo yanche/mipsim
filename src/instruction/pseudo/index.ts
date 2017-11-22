@@ -375,7 +375,7 @@ function la(components: string) {
                 count: 2,
                 label: addr.label,
                 process: (labelAddr: number) => {
-                    const finalNum = labelAddr + addr.num;
+                    const finalNum = labelAddr + (addr.num || 0);
                     return [
                         `lui $at, ${finalNum >> 16}`,
                         `ori ${reg_s}, $at, ${finalNum & maxNum16bits}`

@@ -5,37 +5,37 @@ describe("simple code parsing test", () => {
     it("simple instructions", () => {
         const code = `
         main:
-        ori $t1 $r0 10
-        ori $t2 $r0 15
-        add $t3 $t1 $t2
+        ori $t1, $r0, 10
+        ori $t2, $r0, 15
+        add $t3, $t1, $t2
         `;
         testMIPSParsing2(code, [
-            "ori $t1 $r0 10",
-            "ori $t2 $r0 15",
-            "add $t3 $t1 $t2"
+            "ori $t1, $r0, 10",
+            "ori $t2, $r0, 15",
+            "add $t3, $t1, $t2"
         ], "0x00400004", new Map<string, number>());
     });
 
     it("branch instructions", () => {
         const code = `
         main:
-        beq $t1 $t2 label
-        ori $t1 $t1 10
+        beq $t1, $t2, label
+        ori $t1, $t1, 10
         j end
         label:
-        ori $t2 $t2 15
+        ori $t2, $t2, 15
         end:
-        add $t3 $t1 $t2
+        add $t3, $t1, $t2
         `;
         const labelMap = new Map<string, number>();
         labelMap.set("label", parseInt("0x00400010", 16));
         labelMap.set("end", parseInt("0x00400014", 16));
         testMIPSParsing2(code, [
-            "beq $t1 $t2 label",
-            "ori $t1 $t1 10",
+            "beq $t1, $t2, label",
+            "ori $t1, $t1, 10",
             "j end",
-            "ori $t2 $t2 15", // 0x00400010
-            "add $t3 $t1 $t2" // 0x00400014
+            "ori $t2, $t2, 15", // 0x00400010
+            "add $t3, $t1, $t2" // 0x00400014
         ], "0x00400004", labelMap);
     });
 });
@@ -294,7 +294,7 @@ describe("pseudo instructions", () => {
             "add $t0, $t1, $t2"
         ], "0x00400004", labelMap, true);
     });
-    
+
     it("blt(u)", () => {
         const code = `
             main:
@@ -313,7 +313,7 @@ describe("pseudo instructions", () => {
             "add $t0, $t1, $t2"
         ], "0x00400004", labelMap, true);
     });
-    
+
     it("beqz", () => {
         const code = `
             main:
@@ -323,7 +323,7 @@ describe("pseudo instructions", () => {
             "beq $t0, $r0, 0"
         ], "0x00400004", new Map<string, number>(), true);
     });
-    
+
     it("bnez", () => {
         const code = `
             main:
@@ -333,7 +333,7 @@ describe("pseudo instructions", () => {
             "bne $t0, $r0, 0"
         ], "0x00400004", new Map<string, number>(), true);
     });
-    
+
     it("li", () => {
         const code = `
             main:
@@ -354,7 +354,7 @@ describe("pseudo instructions", () => {
             "ori $t4, $r0, -1"
         ], "0x00400004", new Map<string, number>(), true);
     });
-    
+
     it("move", () => {
         const code = `
             main:
@@ -364,7 +364,7 @@ describe("pseudo instructions", () => {
             "addu $t0, $r0, $t1"
         ], "0x00400004", new Map<string, number>(), true);
     });
-    
+
     it("la (reg)", () => {
         const code = `
             main:
@@ -374,7 +374,7 @@ describe("pseudo instructions", () => {
             "addi $t0, $t1, 0"
         ], "0x00400004", new Map<string, number>(), true);
     });
-    
+
     it("la const, equivalent to li", () => {
         const code = `
             main:
@@ -395,7 +395,7 @@ describe("pseudo instructions", () => {
             "ori $t5, $r0, -1"
         ], "0x00400004", new Map<string, number>(), true);
     });
-    
+
     it("la const(reg)", () => {
         const code = `
             main:
@@ -418,14 +418,30 @@ describe("pseudo instructions", () => {
             "add $t5, $t4, $at",
         ], "0x00400004", new Map<string, number>(), true);
     });
-    
+
+    it("la label + const", () => {
+        const code = `
+            main:
+            la $t3, main
+            la $t0, main + 100
+            la $t1, main + 655400
+            la $t2, main - 10
+            `;
+        testMIPSParsing2(code, [
+            "lui $at, 64",
+            "ori $t3, $at, 4",
+            "lui $at, 64",
+            "ori $t0, $at, 104",
+            "lui $at, 74",
+            "ori $t1, $at, 44",
+            "lui $at, 63",
+            "ori $t2, $at, -6",
+        ], "0x00400004", new Map<string, number>().set("main", parseInt("0x00400004", 16)), true);
+    });
+
     // it("la", () => {
     //     const code = `
     //         main:
-    //         la $t3, label
-    //         la $t0, label + 100
-    //         la $t1, label + 655400
-    //         la $t2, label - 10
     //         la $t0, label + 100($t3)
     //         la $t1, label + 655400($t3)
     //         la $t2, label - 10($t3)

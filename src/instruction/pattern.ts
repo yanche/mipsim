@@ -1,5 +1,6 @@
 
 import { getRegNumber } from "../registers";
+import { UV_UDP_REUSEADDR } from "constants";
 
 export enum InstructionComponentPattern {
     REG = 1,
@@ -89,85 +90,104 @@ export function parseComponent(comp: string, pattern: InstructionComponentPatter
     }
     if (InstructionComponentPattern.PSEUDOADDR & pattern) {
         const idx_lparen = comp.indexOf("(");
-        const idx_plus = comp.indexOf("+");
-        if (idx_lparen < 0 && idx_plus < 0) {
-            const num = Number(comp);
-            if (isNaN(num)) {
-                return <PSEUDOADDR>{
-                    type: PseudoAddr.LABEL,
-                    label: comp
-                }
-            } else {
-                return <PSEUDOADDR>{
-                    type: PseudoAddr.CONST,
-                    num: num
-                }
-            }
-        } else if (idx_lparen < 0) {
+        if (idx_lparen < 0) {
+            // label
+            // const
             // label + const
-            const label = comp.slice(0, idx_plus).trim();
-            const numStr = comp.slice(idx_plus + 1).trim();
-            const num = Number(numStr);
-            if (!label || !numStr || isNaN(num)) {
-                throw new Error(`invalid input for label+cons type of pseudo-addr: ${comp}`);
+            return parseLabelConst(comp);
+        } else {
+            // (reg)
+            // const(reg)
+            // label + const(reg)
+            if (comp[comp.length - 1] !== ")") {
+                throw new Error(`no matching closing parenthesis: ${comp}`);
             }
+            const regstr = comp.slice(idx_lparen + 1, comp.length - 1);
+            if (!regstr || regstr === "$" || regstr[0] !== "$") {
+                throw new Error(`invalid input for (reg) or const(reg): ${comp}`);
+            }
+            const regname = regstr.slice(1);
+            if (idx_lparen === 0) {
+                // (reg)
+                return <PSEUDOADDR>{
+                    type: PseudoAddr.REG,
+                    regName: regname
+                };
+            } else {
+                // const(reg)
+                // label + const(reg)
+                const leadingtext = comp.slice(0, idx_lparen);
+                const leadingparse = parseLabelConst(leadingtext);
+                if (leadingparse.type === PseudoAddr.CONST) {
+                    return <PSEUDOADDR>{
+                        type: PseudoAddr.CONST_REG,
+                        num: leadingparse.num,
+                        regName: regname
+                    };
+                } else if (leadingparse.type === PseudoAddr.LABEL_CONST) {
+                    return <PSEUDOADDR>{
+                        type: PseudoAddr.LABEL_CONST_REG,
+                        label: leadingparse.label,
+                        num: leadingparse.num,
+                        regName: regname
+                    };
+                } else {
+                    throw new Error(`invalid component: ${comp}`);
+                }
+            }
+        }
+    }
+    throw new Error(`input instruction component does not fall into any given pattern: ${comp}`);
+}
+
+function parseLabelConst(comp: string): PSEUDOADDR {
+    if (!comp) {
+        throw new Error("empty component string is not accepted at parseLabelConst");
+    }
+    // label
+    // const
+    // label + const
+    const idx_plus = comp.indexOf("+");
+    const idx_minus = comp.indexOf("-");
+    let idxsign = Math.min(idx_plus, idx_minus);
+    if (idxsign < 0) {
+        idxsign = Math.max(idx_plus, idx_minus);
+    }
+    if (idxsign < 0) {
+        // const or label
+        const num = Number(comp);
+        if (isNaN(num)) {
+            return <PSEUDOADDR>{
+                type: PseudoAddr.LABEL,
+                label: comp
+            };
+        } else {
+            return <PSEUDOADDR>{
+                type: PseudoAddr.CONST,
+                num: num
+            };
+        }
+    } else {
+        // const
+        // label + const
+        const label = comp.slice(0, idxsign).trim();
+        // make it work for "label + 100"
+        const numStr = comp[idxsign] + comp.slice(idxsign + 1).trim();
+        const num = Number(numStr);
+        if (isNaN(num)) {
+            throw new Error(`invalid input for label+cons or const type of pseudo-addr: ${comp}`);
+        }
+        if (label) {
             return <PSEUDOADDR>{
                 type: PseudoAddr.LABEL_CONST,
                 label: label,
                 num: num
             };
-        } else if (idx_plus < 0) {
-            // (reg) or const(reg)
-            if (comp[comp.length - 1] !== ")") {
-                throw new Error(`no matching closing parenthesis: ${comp}`);
-            }
-            const numStr = comp.slice(0, idx_lparen).trim();
-            const num = Number(numStr);
-            const regstr = comp.slice(idx_lparen + 1, comp.length - 1);
-            if ((numStr && isNaN(num)) || !regstr || regstr === "$") {
-                throw new Error(`invalid input for (reg) or const(reg): ${comp}`);
-            }
-            if (regstr[0] === "$") {
-                const regName = regstr.slice(1);
-                if (numStr) {
-                    return <PSEUDOADDR>{
-                        type: PseudoAddr.CONST_REG,
-                        num: num,
-                        regName: regName
-                    };
-                } else {
-                    return <PSEUDOADDR>{
-                        type: PseudoAddr.REG,
-                        regName: regName
-                    };
-                }
-            } else {
-                throw new Error(`bad register format: ${comp}, ${regstr}`);
-            }
         } else {
-            if (comp[comp.length - 1] !== ")") {
-                throw new Error(`no matching closing parenthesis: ${comp}`);
-            }
-            // label + const(reg) 
-            const label = comp.slice(0, idx_plus).trim();
-            const numstr = comp.slice(idx_plus + 1, idx_lparen).trim();
-            const regstr = comp.slice(idx_lparen + 1, comp.length - 1).trim();
-            const num = Number(numstr);
-            if (!label || !numstr || isNaN(num) || !regstr || regstr === "$") {
-                throw new Error(`invalid input for label+cons(reg) type of pseudo-addr: ${comp}`);
-            }
-            if (regstr[0] === "$") {
-                const regName = regstr.slice(1);
-                return <PSEUDOADDR>{
-                    type: PseudoAddr.LABEL_CONST_REG,
-                    label: label,
-                    num: num,
-                    regName: regName
-                };
-            } else {
-                throw new Error(`bad register format: ${comp}, ${regstr}`);
+            return <PSEUDOADDR>{
+                type: PseudoAddr.CONST,
+                num: num
             }
         }
     }
-    throw new Error(`input instruction component does not fall into any given pattern: ${comp}`);
 }

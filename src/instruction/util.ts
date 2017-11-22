@@ -11,8 +11,7 @@ export interface ParseComponentsResult<T> {
 }
 
 export function parseComponents<T extends (REG | IMM | ADDR | LABEL | PSEUDOADDR)[]>(comp: string, pattern: CPattern[]): ParseComponentsResult<T> {
-    comp = comp.replace(/,/g, " ");
-    const components = comp.split(" ").filter(x => x.length > 0);
+    const components = comp.split(",").map(x => x.trim()).filter(x => x.length > 0);
     if (components.length !== pattern.length) {
         return {
             success: false,
