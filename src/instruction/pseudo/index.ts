@@ -391,7 +391,7 @@ function la(components: string) {
                     const finalNum = labelAddr + addr.num;
                     return [
                         `lui $at, ${finalNum >> 16}`,
-                        `ori ${reg_s}, $at, ${finalNum & maxNum16bits}`,
+                        `ori $at, $at, ${finalNum & maxNum16bits}`,
                         `add ${reg_s}, $${addr.regName}, $at`
                     ];
                 }

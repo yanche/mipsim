@@ -439,15 +439,23 @@ describe("pseudo instructions", () => {
         ], "0x00400004", new Map<string, number>().set("main", parseInt("0x00400004", 16)), true);
     });
 
-    // it("la", () => {
-    //     const code = `
-    //         main:
-    //         la $t0, label + 100($t3)
-    //         la $t1, label + 655400($t3)
-    //         la $t2, label - 10($t3)
-    //         `;
-    //     testMIPSParsing2(code, [
-    //         "addu $t0, $r0, $t1"
-    //     ], "0x00400004", new Map<string, number>(), true);
-    // });
+    it("la label + const(reg)", () => {
+        const code = `
+            main:
+            la $t0, main + 100($t3)
+            la $t1, main + 655400($t3)
+            la $t2, main - 10($t3)
+            `;
+        testMIPSParsing2(code, [
+            "lui $at, 64",
+            "ori $at, $at, 104",
+            "add $t0, $t3, $at",
+            "lui $at, 74",
+            "ori $at, $at, 44",
+            "add $t1, $t3, $at",
+            "lui $at, 63",
+            "ori $at, $at, -6",
+            "add $t2, $t3, $at",
+        ], "0x00400004", new Map<string, number>().set("main", parseInt("0x00400004", 16)), true);
+    });
 });
