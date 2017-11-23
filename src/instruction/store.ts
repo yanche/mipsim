@@ -1,10 +1,9 @@
 
-import { Registers, REG } from "../registers";
+import { Registers } from "../registers";
 import { Word, Byte } from "../def";
 import Memory from "../memory";
 import { Instruction } from "./def";
 import { byte } from "../utility";
-import { InstructionComponentPattern as CPattern } from "./pattern";
 import { genParserREG1Addr16b, makeInstructionNameMap } from "./util";
 
 // the least significant byte of $t is stored at the specified address

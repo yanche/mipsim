@@ -1,10 +1,9 @@
 
-import { Registers, REG } from "../registers";
+import { Registers } from "../registers";
 import { Word } from "../def";
 import Memory from "../memory";
 import { Instruction } from "./def";
 import { byte } from "../utility";
-import { InstructionComponentPattern as CPattern } from "./pattern";
 import { genParserREG1IMM16b, genParserREG1Addr16b, makeInstructionNameMap } from "./util";
 
 // a byte is loaded into a register from the specified address

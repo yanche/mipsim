@@ -2,7 +2,6 @@
 import { Word } from "../def";
 import Memory from "../memory";
 import { Registers } from "../registers";
-import { findFirst, validate } from "../utility";
 
 export interface Parser {
     (components: string, addr: number, labelMap: Map<string, number>, generated?: boolean): ParseResult;

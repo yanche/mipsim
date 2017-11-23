@@ -35,7 +35,6 @@ export class Memory {
     private _blockOp(addr: Addr, byteLen: number, writingData?: Bit[]): Bit[] {
         let blockSeq = this._blockSeq(addr);
         let blockOffset = this._blockOffset(addr);
-        let unhandledBytes = byteLen;
         let result: Bit[][] = [];
         let writingDataOffset = 0;
         while (byteLen > 0) {

@@ -2,7 +2,7 @@
 import { Word, Bit } from "../def";
 import { REG, IMM, ADDR, LABEL, PSEUDOADDR, InstructionComponentPattern as CPattern, parseComponent } from "./pattern";
 import { byte, flatten } from "../utility";
-import { Parser, minSignedNum16Bits, maxSignedNum16Bits, maxUnsignedNum16Bits, maxUnsignedNum26Bits, maxUnsignedNum5Bits, Instruction, ParseResult } from "./def";
+import { Parser, Instruction, ParseResult } from "./def";
 
 export interface ParseComponentsResult<T> {
     success: boolean;

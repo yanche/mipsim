@@ -4,7 +4,6 @@ import { Word } from "../def";
 import Memory from "../memory";
 import { Instruction } from "./def";
 import { byte } from "../utility";
-import { InstructionComponentPattern as CPattern } from "./pattern";
 import { genParserREG1, genParserLabelIMM26b, makeInstructionNameMap } from "./util";
 
 // jumps to the calculated address

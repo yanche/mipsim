@@ -1,8 +1,8 @@
 
 import Memory from "../memory";
 import { parse } from "../instruction";
-import { pseudoCodeRepl, PseudoCodePostProcess } from "../instruction/pseudo";
-import { validate, byte, parseAsciiStr, flatten } from "../utility";
+import { isPesudoInstruction, pseudoGetCount, pseudoCodeConv } from "../instruction/pseudo";
+import { validate, byte, parseAsciiStr } from "../utility";
 import { Word, Bit, Byte, HalfWord } from "../def";
 
 interface CodeContext {
@@ -14,14 +14,8 @@ interface CodeContext {
 
 interface CodeLineRep {
     code: string;
-    generated: boolean;
-}
-
-function makeCodeLineRep(code: string, generated: boolean): CodeLineRep {
-    return {
-        code: code,
-        generated: generated
-    };
+    pseudo: boolean;
+    targetCount: number;
 }
 
 export function parseMIPSCode(codelines: string[]): Memory {
@@ -34,51 +28,30 @@ export function parseMIPSCode(codelines: string[]): Memory {
     };
     const mem = new Memory();
     let len = codelines.length;
-    const pseudoReplCollector = new Array<CodeLineRep[] | PseudoCodePostProcess>(len);
+    const pseudoReplCollector = new Array<CodeLineRep>(len);
     let i = 0;
     while (i < len) {
-        const pseudoReplResult = pseudoCodeRepl(codelines[i]);
-        if (!pseudoReplResult.success) {
-            throw new Error(pseudoReplResult.errmsg);
-        }
-        if (Array.isArray(pseudoReplResult.code)) {
-            pseudoReplCollector[i] = pseudoReplResult.code.map(m => makeCodeLineRep(m, !pseudoReplResult.native));
-        } else {
-            pseudoReplCollector[i] = pseudoReplResult.code;
-        }
-        ++i;
-    }
-    const postReplCodelines = flatten<PseudoCodePostProcess | CodeLineRep>(pseudoReplCollector);
-    len = postReplCodelines.length;
-    i = 0;
-    while (i < len) {
-        // first loop, label & data segment
-        parseNonTextCodeLine(postReplCodelines[i++], ctx, mem);
+        // first loop, get the total count of instructions
+        // some instructions may be converted from pseudo instructions
+        const code = codelines[i];
+        const pseudo = isPesudoInstruction(code);
+        pseudoReplCollector[i++] = {
+            code: code,
+            pseudo: pseudo,
+            targetCount: pseudo ? pseudoGetCount(code) : 1
+        };
     }
     i = 0;
-    const pseudoPostProcesslCollector = new Array<CodeLineRep[] | CodeLineRep>(len);
     while (i < len) {
-        // first loop, label & data segment
-        const codeline = postReplCodelines[i];
-        if (!isCodeLineRep(codeline)) {
-            if (!ctx.labelMap.has(codeline.label)) {
-                throw new Error(`label not found: ${codeline.label}`);
-            }
-            pseudoPostProcesslCollector[i] = codeline.process(ctx.labelMap.get(codeline.label)).map(c => makeCodeLineRep(c, true));
-        } else {
-            pseudoPostProcesslCollector[i] = codeline;
-        }
-        ++i;
+        // second loop, label & data segment
+        parseNonTextCodeLine(pseudoReplCollector[i++], ctx, mem);
     }
-    const pseudoPostProcessCodelines = flatten(pseudoPostProcesslCollector);
-    len = pseudoPostProcessCodelines.length;
     i = 0;
     ctx.textSeg = true;
     ctx.textPtr = firstInstAddr + 4;
     while (i < len) {
-        // second loop, instruction(text) segment
-        const crep = pseudoPostProcessCodelines[i++];
-        parseTextCodeLine(crep.code, crep.generated, ctx, mem);
+        // third loop, instruction(text) segment
+        parseTextCodeLine(pseudoReplCollector[i++], ctx, mem);
     }
     if (!ctx.labelMap.has("main")) {
         throw new Error(`main label was not declared`);
@@ -88,19 +61,19 @@ export function parseMIPSCode(codelines: string[]): Memory {
     return mem;
 }
 
-function parseTextCodeLine(codeline: string, generated: boolean, ctx: CodeContext, mem: Memory): void {
-    codeline = (codeline || "").trim();
-    if (codeline.length === 0 || codeline[0] === "#") return; // comment starts with #
-    if (codeline === ".data") {
+function parseTextInstruction(code: string, generated: boolean, ctx: CodeContext, mem: Memory): void {
+    code = (code || "").trim();
+    if (code.length === 0 || code[0] === "#") return; // comment starts with #
+    if (code === ".data") {
         ctx.textSeg = false;
         return;
     }
-    if (codeline === ".text") {
+    if (code === ".text") {
         ctx.textSeg = true;
         return;
     }
-    if (ctx.textSeg && codeline[codeline.length - 1] !== ":") {
-        const parseResult = parse(codeline, ctx.textPtr, ctx.labelMap, generated);
+    if (ctx.textSeg && code[code.length - 1] !== ":") {
+        const parseResult = parse(code, ctx.textPtr, ctx.labelMap, generated);
         if (!parseResult.success) {
             throw new Error(parseResult.errmsg);
         }
@@ -111,12 +84,21 @@ function parseTextCodeLine(codeline: string, generated: boolean, ctx: CodeContex
     }
 }
 
-function isCodeLineRep(codeline: CodeLineRep | PseudoCodePostProcess): codeline is CodeLineRep {
-    return typeof (<any>codeline).code === "string";
+function parseTextCodeLine(codeline: CodeLineRep, ctx: CodeContext, mem: Memory): void {
+    if (codeline.pseudo) {
+        const pseudoConv = pseudoCodeConv(codeline.code, ctx.labelMap);
+        if (pseudoConv.length !== codeline.targetCount) {
+            throw new Error(`pseudo instruction does not converted into expected number of instructions: ${codeline.code}, expected: ${codeline.targetCount}, actual: ${pseudoConv.length} \r\n${pseudoConv.join("\r\n")}`)
+        } else {
+            pseudoConv.forEach(p => parseTextInstruction(p, true, ctx, mem));
+        }
+    } else {
+        parseTextInstruction(codeline.code, false, ctx, mem);
+    }
 }
 
-function parseNonTextCodeLine(codeline: CodeLineRep | PseudoCodePostProcess, ctx: CodeContext, mem: Memory): void {
-    if (isCodeLineRep(codeline)) {
+function parseNonTextCodeLine(codeline: CodeLineRep, ctx: CodeContext, mem: Memory): void {
+    if (!codeline.pseudo) {
         const code = (codeline.code || "").trim();
         if (code.length === 0 || code[0] === "#") return; // comment starts with #
         if (code[0] === ".") {
@@ -156,10 +138,10 @@ function parseNonTextCodeLine(codeline: CodeLineRep | PseudoCodePostProcess, ctx
     } else {
         if (ctx.textSeg) {
             // just move the counter but don't process instructions, we need go thru first loop for labels.
-            ctx.textPtr += 4 * codeline.count;
+            ctx.textPtr += 4 * codeline.targetCount;
             return;
         }
-        throw new Error(`PseudoCodePostProcess indicates a set of instructions converted from pseudo-instruction, cannot be part of .data segment`);
+        throw new Error(`data segment cannot contain instructions`);
     }
 }
 

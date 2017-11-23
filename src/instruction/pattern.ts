@@ -1,6 +1,5 @@
 
 import { getRegNumber } from "../registers";
-import { UV_UDP_REUSEADDR } from "constants";
 
 export enum InstructionComponentPattern {
     REG = 1,

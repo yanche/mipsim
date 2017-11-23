@@ -1,6 +1,5 @@
 
 import { Byte, Word, Bit } from "../def";
-import { flatten } from "./index";
 import * as validate from "./validate";
 
 export function makeArray<T>(len: number, valForAll: T): T[] {

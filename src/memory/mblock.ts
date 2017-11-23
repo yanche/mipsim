@@ -1,6 +1,6 @@
 
 import { validate } from "../utility";
-import { Word, Byte, Bit } from "../def";
+import { Bit } from "../def";
 
 export class Block {
     private _size: number;

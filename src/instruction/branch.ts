@@ -4,7 +4,6 @@ import { Word, HalfWord } from "../def";
 import Memory from "../memory";
 import { Instruction } from "./def";
 import { byte } from "../utility";
-import { InstructionComponentPattern as CPattern } from "./pattern";
 import { genParserREG2LabelOffsetIMM16b, genParserREG1LabelOffsetIMM16b, makeInstructionNameMap } from "./util";
 
 // branches if the two registers are equal

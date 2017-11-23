@@ -1,10 +1,9 @@
 
-import { Registers, REG } from "../registers";
+import { Registers } from "../registers";
 import { Word } from "../def";
 import Memory from "../memory";
 import { Instruction } from "./def";
 import { byte } from "../utility";
-import { InstructionComponentPattern as CPattern } from "./pattern";
 import { genParserREG3, genParserREG2IMM16b, makeInstructionNameMap } from "./util";
 
 // if $s is less than $t, $d is set to one. It gets zero otherwise

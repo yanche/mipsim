@@ -1,7 +1,7 @@
 
 import Memory from "../memory";
 import { Registers, REG } from "../registers";
-import { Addr, codeStartAddr } from "../def";
+import { codeStartAddr } from "../def";
 import * as instruction from "../instruction";
 import * as parser from "../parser";
 

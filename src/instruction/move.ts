@@ -4,7 +4,6 @@ import { Word } from "../def";
 import Memory from "../memory";
 import { Instruction } from "./def";
 import { byte } from "../utility";
-import { InstructionComponentPattern as CPattern } from "./pattern";
 import { genParserREG1, makeInstructionNameMap } from "./util";
 
 // the contents of register HI are moved to the specified register

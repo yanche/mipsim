@@ -3,8 +3,7 @@ import { Registers, REG } from "../registers";
 import { Word } from "../def";
 import Memory from "../memory";
 import { Instruction } from "./def";
-import { byte, flatten } from "../utility";
-import { InstructionComponentPattern as CPattern } from "./pattern";
+import { byte } from "../utility";
 import { genParserREG3, genParserREG2IMM16b, genParserREG2, genParserREG2IMM5b, makeInstructionNameMap } from "./util";
 
 // $d = $s + $t

@@ -1,9 +1,7 @@
 
-import * as assert from "assert";
 import { addu, subu } from "../arithmetic";
 import { singleInstructionTest, getRegBitStr, testWordWithBitString } from "./util";
-import { REG, getRegNumber } from "../../registers";
-import { byte } from "../../utility";
+import { REG } from "../../registers";
 
 describe("addu test", () => {
     it("1 + 2 = 3", () => {
