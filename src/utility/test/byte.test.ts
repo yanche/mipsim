@@ -15,6 +15,6 @@ describe("numToBits", () => {
 
 function testNumToBits(num: number, bits: string): () => void {
     return () => {
-        assert.strictEqual(byte.numToBits(num).map(b => b ? "1" : "0").join(""), bits);
+        assert.strictEqual(byte.numToBits(num).result.map(b => b ? "1" : "0").join(""), bits);
     }
 }

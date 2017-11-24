@@ -5,6 +5,7 @@ import Memory from "../memory";
 import { Instruction } from "./def";
 import { byte } from "../utility";
 import { makeInstructionNameMap } from "./util";
+import { MIPSError, RuntimeErrorCode } from "../error";
 
 // noop, no operation
 // Note: The encoding for a NOOP represents the instruction SLL $0, $0, 0 which has no side effects.
@@ -15,7 +16,7 @@ const noop = new Instruction({
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         regs.advancePC();
     },
-    parser: () => { return { success: true, word: byte.makeWord0() }; }
+    parser: () => byte.makeWord0()
 });
 
 // generates a software interrupt
@@ -29,7 +30,7 @@ const syscall = new Instruction({
         }
         regs.advancePC();
     },
-    parser: () => { return { success: true, word: <Word>byte.makeFalseArray(28).concat([true, true, false, false]) }; }
+    parser: () => <Word>byte.makeFalseArray(28).concat([true, true, false, false])
 });
 
 // generates a software interrupt
@@ -37,9 +38,9 @@ const break0 = new Instruction({
     name: "BREAK",
     pattern: "0000 0000 0000 0000 0000 0000 0000 1101",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
-        throw new Error(`break instruction is not implemented yet`)
+        throw new MIPSError(`break instruction is not implemented yet, at 0x${byte.wordToHexString(regs.getVal(REG.PC))}`, RuntimeErrorCode.NOT_YET_IMPLEMENTED);
     },
-    parser: () => { return { success: true, word: <Word>byte.makeFalseArray(28).concat([true, true, false, true]) }; }
+    parser: () => <Word>byte.makeFalseArray(28).concat([true, true, false, true])
 });
 
 export const nameMap = makeInstructionNameMap([noop, syscall, break0]);

@@ -14,10 +14,10 @@ export function singleInstructionTest(inst: Instruction, comp: string, regsUnsig
     const regs = new Registers();
     for (let r of regsUnsignedValues) {
         if (r.valToSet !== undefined) {
-            regs.setVal(r.regNum, <Word>byte.bitsNumFill(byte.numToBits(r.valToSet), 32, false));
+            regs.setVal(r.regNum, <Word>byte.bitsNumFill(byte.numToBits(r.valToSet).result, 32, false).bits);
         }
     }
-    const halt = inst.execute(inst.parse(comp, instAddr, labelMap).word, new Memory(), regs);
+    const halt = inst.execute(inst.parse(comp, instAddr, labelMap), new Memory(), regs);
     for (let r of regsUnsignedValues) {
         if (r.valToTest !== undefined) {
             assert.strictEqual(byte.bitsToNum(regs.getVal(r.regNum), false), r.valToTest, `register value not expected: ${REG[r.regNum]}`);
@@ -31,7 +31,7 @@ export function stringifyBits(bits: Bit[]): string {
 }
 
 export function getRegBitStr(regname: string): string {
-    return stringifyBits(byte.bitsNumFill(byte.numToBits(getRegNumber(regname)), 5, false));
+    return stringifyBits(byte.bitsNumFill(byte.numToBits(getRegNumber(regname)).result, 5, false).bits);
 }
 
 export function testWordWithBitString(word: Word, bitsString: string): void {

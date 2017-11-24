@@ -7,7 +7,7 @@ describe("addu test", () => {
     it("1 + 2 = 3", () => {
         // $t0 = $t1 + $t2
         // addu $t0 $t1 $t2
-        singleInstructionTest(addu, "$t0 $t1 $t2", [
+        singleInstructionTest(addu, "$t0, $t1, $t2", [
             {
                 regNum: REG.PC,
                 valToSet: 4,
@@ -33,7 +33,7 @@ describe("addu test", () => {
 
     it("0xFFFFFFFF + 1 = 0", () => {
         // $t0 = $t1 + $t2
-        singleInstructionTest(addu, "$t0 $t1 $t2", [
+        singleInstructionTest(addu, "$t0, $t1, $t2", [
             {
                 regNum: REG.PC,
                 valToSet: 4,
@@ -59,7 +59,7 @@ describe("addu test", () => {
 
     it("0xFFFFFFFF + 0xFFFFFFFF = 0xFFFFFFFE", () => {
         // $t0 = $t1 + $t2
-        singleInstructionTest(addu, "$t0 $t1 $t2", [
+        singleInstructionTest(addu, "$t0, $t1, $t2", [
             {
                 regNum: REG.PC,
                 valToSet: 4,
@@ -88,7 +88,7 @@ describe("subu test", () => {
     it("3 - 2 = 1", () => {
         // $t0 = $t1 - $t2
         // subu $t0 $t1 $t2
-        singleInstructionTest(subu, "$t0 $t1 $t2", [
+        singleInstructionTest(subu, "$t0, $t1, $t2", [
             {
                 regNum: REG.PC,
                 valToSet: 4,
@@ -117,7 +117,7 @@ describe("parsing", () => {
     // $t0 = $t1 + $t2
     // addu $t0 $t1 $t2
     // addu $d, $s, $t
-    it("addu $t0 $t1 $t2", () => {
-        testWordWithBitString(addu.parse("$t0 $t1 $t2", 0, null).word, `000000${getRegBitStr("t1")}${getRegBitStr("t2")}${getRegBitStr("t0")}00000100001`);
+    it("addu $t0, $t1, $t2", () => {
+        testWordWithBitString(addu.parse("$t0, $t1, $t2", 0, null), `000000${getRegBitStr("t1")}${getRegBitStr("t2")}${getRegBitStr("t0")}00000100001`);
     });
 });

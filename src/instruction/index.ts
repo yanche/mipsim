@@ -12,24 +12,25 @@ import { nameMap as loadNameMap } from "./load";
 import { nameMap as moveNameMap } from "./move";
 import { nameMap as othersNameMap } from "./others";
 import { nameMap as storeNameMap } from "./store";
-import { ParseResult } from "./def";
+import { RuntimeErrorCode, SyntaxErrorCode, MIPSError } from "../error";
 
 // return true: halt, false: continue
 export function execute(mem: Memory, regs: Registers): boolean {
-    const itrn = mem.readWord(regs.getVal(REG.PC));
+    const pc = regs.getVal(REG.PC);
+    const itrn = mem.readWord(pc);
     const instruction = finder.findByBits(itrn);
     if (!instruction) {
-        throw new Error(`cannot find the proper instruction for next 4 bytes: 0x${byte.wordToHexString(itrn)}`);
+        throw new MIPSError(`unknown instruction: 0x${byte.wordToHexString(itrn)}, at: 0x${byte.wordToHexString(pc)}`, RuntimeErrorCode.UNKNOWN_INSTRUCTION);
     }
     return instruction.execute(itrn, mem, regs);
 }
 
-export function parse(codeline: string, instAddr: number, labelMap: Map<string, number>, generated?: boolean): ParseResult {
+export function parse(codeline: string, instAddr: number, labelMap: Map<string, number>, generated?: boolean): Word {
     const firstspace = codeline.indexOf(" ");
     const insType = firstspace === -1 ? codeline : codeline.slice(0, firstspace);
     const itrn = finder.findByName(insType);
     if (!itrn) {
-        throw new Error(`instruction not found: ${insType}`);
+        throw new MIPSError(`unknown instruction: ${codeline}`, SyntaxErrorCode.UNKNOWN_INSTRUCTION);
     }
     return itrn.parse(firstspace === -1 ? "" : codeline.slice(firstspace + 1), instAddr, labelMap, generated);
 }

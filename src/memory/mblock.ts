@@ -23,7 +23,7 @@ export class Block {
         const start = offset * 8;
         const end = start + bits.length;
         if (end >= this.size * 8) {
-            throw new Error(`reading block exceeds block boundary, from: ${offset}, to ${end / 8}, block size: ${this.size}`);
+            throw new Error(`writing block exceeds block boundary, from: ${offset}, to ${end / 8}, block size: ${this.size}`);
         }
         for (let i = 0; i < bits.length; ++i) {
             this._data[start + i] = bits[i];

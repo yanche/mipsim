@@ -55,7 +55,7 @@ export const addiu = new Instruction({
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
-        const add = byte.bitsAdd(regs.getVal(reg_s), <Word>byte.makeHalfWord0().concat(itrn.slice(16)));
+        const add = byte.bitsAdd(regs.getVal(reg_s), <Word>byte.makeArray(16, itrn[16]).concat(itrn.slice(16)));
         regs.setVal(reg_t, add.result);
         regs.advancePC();
     },
@@ -71,7 +71,7 @@ export const and = new Instruction({
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
         const reg_d = byte.bits5ToRegNum(itrn, 16);
-        const and = byte.bitsAnd(regs.getVal(reg_s), regs.getVal(reg_t));
+        const and = byte.bitsAnd(regs.getVal(reg_s), regs.getVal(reg_t)).result;
         regs.setVal(reg_d, and);
         regs.advancePC();
     },
@@ -86,7 +86,7 @@ export const andi = new Instruction({
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
-        const and = byte.bitsAnd(regs.getVal(reg_s), <Word>byte.makeHalfWord0().concat(itrn.slice(16)));
+        const and = byte.bitsAnd(regs.getVal(reg_s), <Word>byte.makeHalfWord0().concat(itrn.slice(16))).result;
         regs.setVal(reg_t, and);
         regs.advancePC();
     },
@@ -170,7 +170,7 @@ export const or = new Instruction({
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
         const reg_d = byte.bits5ToRegNum(itrn, 16);
-        const or = byte.bitsOr(regs.getVal(reg_s), regs.getVal(reg_t));
+        const or = byte.bitsOr(regs.getVal(reg_s), regs.getVal(reg_t)).result;
         regs.setVal(reg_d, or);
         regs.advancePC();
     },
@@ -184,7 +184,7 @@ export const ori = new Instruction({
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
-        const or = byte.bitsOr(regs.getVal(reg_s), <Word>byte.makeHalfWord0().concat(itrn.slice(16)));
+        const or = byte.bitsOr(regs.getVal(reg_s), <Word>byte.makeHalfWord0().concat(itrn.slice(16))).result;
         regs.setVal(reg_t, or);
         regs.advancePC();
     },
@@ -316,7 +316,7 @@ export const subu = new Instruction({
         const num_s = byte.bitsToNum(regs.getVal(reg_s), false);
         const num_t = byte.bitsToNum(regs.getVal(reg_t), false);
         const num_d = num_s - num_t;
-        let bits_d = byte.numToBits(num_d);
+        let bits_d = byte.numToBits(num_d).result;
         if (bits_d.length < 32) {
             bits_d = byte.makeArray(32 - bits_d.length, bits_d[0]).concat(bits_d);
         }
@@ -336,7 +336,7 @@ export const xor = new Instruction({
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
         const reg_d = byte.bits5ToRegNum(itrn, 16);
-        const data = byte.bitsXor(regs.getVal(reg_s), regs.getVal(reg_t));
+        const data = byte.bitsXor(regs.getVal(reg_s), regs.getVal(reg_t)).result;
         regs.setVal(reg_d, data);
         regs.advancePC();
     },
@@ -352,7 +352,7 @@ export const xori = new Instruction({
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
         const imm = itrn.slice(16);
-        const data = byte.bitsXor(regs.getVal(reg_s), <Word>byte.makeHalfWord0().concat(imm));
+        const data = byte.bitsXor(regs.getVal(reg_s), <Word>byte.makeHalfWord0().concat(imm)).result;
         regs.setVal(reg_t, data);
         regs.advancePC();
     },

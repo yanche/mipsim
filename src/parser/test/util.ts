@@ -19,7 +19,7 @@ export function testMIPSParsing(code: string, memData: ExpectedMemory[], labelMa
     const memExpected: { addr: string, data: string }[] = memData.map(m => {
         return {
             addr: m.addr,
-            data: byte.wordToHexString(parse(m.instruction, parseInt(m.addr, 16), labelMap, m.generated).word)
+            data: byte.wordToHexString(parse(m.instruction, parseInt(m.addr, 16), labelMap, m.generated))
         }
     });
     const codelines = code.replace("\r", "").split("\n").map(s => s.trim()).filter(s => s.length);
@@ -30,7 +30,7 @@ export function testMIPSParsing(code: string, memData: ExpectedMemory[], labelMa
             throw new Error(`invalid mem addr or data: ${m.addr}, ${m.data}`);
         }
         // addr must be hexical, leading 0x is optional
-        let addrWord = <Word>byte.bitsNumFill(byte.numToBits(addrNum), 32, false);
+        let addrWord = <Word>byte.bitsNumFill(byte.numToBits(addrNum).result, 32, false).bits;
         const data = m.data;
         let membits: Bit[];
         // data is hexical
@@ -41,7 +41,7 @@ export function testMIPSParsing(code: string, memData: ExpectedMemory[], labelMa
         })) {
             throw new Error(`data in hexical must consists of 0-9a-fA-F and length%2 must be 0: ${data}`);
         }
-        membits = flatten(ds.map(s => byte.bitsNumFill(byte.numToBits(parseInt(s, 16)), 4, false)));
+        membits = flatten(ds.map(s => byte.bitsNumFill(byte.numToBits(parseInt(s, 16)).result, 4, false).bits));
         let idx = 0;
         while (idx < membits.length) {
             compareByte(mem.readByte(addrWord), <Byte>membits.slice(idx, idx + 8), addrWord);
@@ -62,7 +62,7 @@ function instructionIntoConsecutiveMemory(startAddr: string, instructions: strin
     // address in hexical string
     const baseAddr = parseInt(startAddr, 16);
     return instructions.map((c, idx) => {
-        const addr = <Word>byte.bitsNumFill(byte.numToBits(baseAddr + 4 * idx), 32, false);
+        const addr = <Word>byte.bitsNumFill(byte.numToBits(baseAddr + 4 * idx).result, 32, false).bits;
         return {
             addr: byte.wordToHexString(addr),
             instruction: c,

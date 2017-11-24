@@ -4,13 +4,7 @@ import Memory from "../memory";
 import { Registers } from "../registers";
 
 export interface Parser {
-    (components: string, addr: number, labelMap: Map<string, number>, generated?: boolean): ParseResult;
-}
-
-export interface ParseResult {
-    success: boolean;
-    errmsg?: string;
-    word?: Word;
+    (components: string, addr: number, labelMap: Map<string, number>, generated?: boolean): Word;
 }
 
 export class Instruction {
@@ -66,7 +60,7 @@ export class Instruction {
         });
     }
 
-    public parse(comp: string, addr: number, labelMap: Map<string, number>, generated?: boolean): ParseResult {
+    public parse(comp: string, addr: number, labelMap: Map<string, number>, generated?: boolean): Word {
         return this._parser(comp, addr, labelMap, generated);
     }
 }

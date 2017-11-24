@@ -2,6 +2,7 @@
 import { byte } from "../../utility";
 import { parseComponents } from "../util";
 import { InstructionComponentPattern as CPattern, REG, IMM, LABEL, PSEUDOADDR, PseudoAddr } from "../pattern";
+import { MIPSError, SyntaxErrorCode } from "../../error";
 
 export interface Handler {
     getCount(comp: string): number;
@@ -31,11 +32,18 @@ map.set("abs", abs);
 // div(u) $d, $s, $t
 function divGen(command: string): Handler {
     return {
-        getCount: (comp: string) => parseComp3Reg(comp).success ? 4 : 1,
+        getCount: (comp: string) => {
+            try {
+                parseComp3Reg(comp);
+                return 4;
+            }
+            catch (err) {
+                return 1;
+            }
+        },
         conv: (comp: string): string[] => {
-            const parseResult = parseComp3Reg(comp);
-            if (parseResult.success) {
-                const comps = parseResult.result;
+            try {
+                const comps = parseComp3Reg(comp);
                 const reg_d = "$" + comps[0].regName;
                 const reg_s = "$" + comps[1].regName;
                 const reg_t = "$" + comps[2].regName;
@@ -45,7 +53,8 @@ function divGen(command: string): Handler {
                     `${command} ${reg_s}, ${reg_t}`,
                     `mflo ${reg_d}`
                 ];
-            } else {
+            }
+            catch (err) {
                 return [`${command} ${comp}`]; // fall back to original instruction
             }
         }
@@ -351,7 +360,7 @@ const la: Handler = {
         if (addr.type === PseudoAddr.CONST) {
             return li.getCount(comp);
         } else if (addr.type === PseudoAddr.CONST_REG || addr.type === PseudoAddr.REG) {
-            return byte.numToBits(addr.num || 0).length > 16 ? (li.getCount(`$at, ${addr.num}`) + 1) : 1;
+            return byte.numToBits(addr.num || 0).result.length > 16 ? (li.getCount(`$at, ${addr.num}`) + 1) : 1;
         } else if (addr.type === PseudoAddr.LABEL || addr.type === PseudoAddr.LABEL_CONST) {
             return 2;
         } else {
@@ -366,7 +375,7 @@ const la: Handler = {
             return li.conv(comp, labelMap);
         } else if (addr.type === PseudoAddr.CONST_REG || addr.type === PseudoAddr.REG) {
             const num = addr.num || 0;
-            const numBits = byte.numToBits(num);
+            const numBits = byte.numToBits(num).result;
             if (numBits.length > 16) {
                 // long IMM
                 return li.conv(`$at, ${num}`, labelMap).concat(`add ${reg_s}, $${addr.regName}, $at`);
@@ -376,7 +385,7 @@ const la: Handler = {
             }
         } else {
             if (!labelMap.has(addr.label)) {
-                throw new Error(`label not found: ${addr.label}`);
+                throw new MIPSError(`label not found: ${addr.label}`, SyntaxErrorCode.LABEL_NOT_FOUND);
             }
             const labelAddr = labelMap.get(addr.label);
             if (addr.type === PseudoAddr.LABEL || addr.type === PseudoAddr.LABEL_CONST) {
@@ -441,27 +450,21 @@ function parseLIComp(comp: string): {
     high: number;
     low: number;
 } {
-    const parseResult = parseComponents<[REG, IMM]>(comp, [CPattern.REG, CPattern.IMM]);
-    if (parseResult.success) {
-        const comps = parseResult.result;
-        const numBits = byte.bitsNumFill(byte.numToBits(comps[1].num), 32, true);
+    const comps = parseComponents<[REG, IMM]>(comp, [CPattern.REG, CPattern.IMM]);
+    const { bits, err } = byte.bitsNumFill(byte.numToBits(comps[1].num).result, 32, true);
+    if (err) {
+        throw new MIPSError(`failed to encode the integer into 32-bits number: ${comps}`, SyntaxErrorCode.NUM_OVERFLOW);
+    } else {
         return {
             reg_s: "$" + comps[0].regName,
-            high: byte.bitsToNum(numBits.slice(0, 16), true),
-            low: byte.bitsToNum(numBits.slice(16), true)
+            high: byte.bitsToNum(bits.slice(0, 16), true),
+            low: byte.bitsToNum(bits.slice(16), true)
         };
-    } else {
-        throw new Error(parseResult.errmsg);
     }
 }
 
 function parseLAComp(comp: string) {
-    const parseResult = parseComponents<[REG, PSEUDOADDR]>(comp, [CPattern.REG, CPattern.PSEUDOADDR]);
-    if (parseResult.success) {
-        return parseResult.result;
-    } else {
-        throw new Error(parseResult.errmsg);
-    }
+    return parseComponents<[REG, PSEUDOADDR]>(comp, [CPattern.REG, CPattern.PSEUDOADDR]);
 }
 
 function genConstHandler(count: number, conv: (comp: string, labelMap: Map<string, number>) => string[]): Handler {
@@ -472,12 +475,7 @@ function genConstHandler(count: number, conv: (comp: string, labelMap: Map<strin
 }
 
 function processComponents<T extends (REG | IMM | LABEL | PSEUDOADDR)[]>(comp: string, pattern: CPattern[], processor: (comps: T) => string[]): string[] {
-    const compsResult = parseComponents<T>(comp, pattern);
-    if (compsResult.success) {
-        return processor(compsResult.result);
-    } else {
-        throw new Error(compsResult.errmsg);
-    }
+    return processor(parseComponents<T>(comp, pattern));
 }
 
 function parseComp3Reg(comp: string) {

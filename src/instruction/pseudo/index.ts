@@ -1,5 +1,6 @@
 
 import { getHandler } from "./handlers";
+import { MIPSError, SyntaxErrorCode } from "../../error";
 
 export function pseudoCodeConv(code: string, labelMap: Map<string, number>): string[] {
     const split = splitCode(code);
@@ -7,7 +8,7 @@ export function pseudoCodeConv(code: string, labelMap: Map<string, number>): str
     if (handler) {
         return handler.conv(split.comp, labelMap);
     } else {
-        throw new Error(`handler not found for ${split.cmd}`);
+        throw new MIPSError(`not a pseudo instruction: ${split.cmd}`, SyntaxErrorCode.UNKNOWN_PSEUDO_INSTRUCTION);
     }
 }
 
@@ -17,7 +18,7 @@ export function pseudoGetCount(code: string): number {
     if (handler) {
         return handler.getCount(split.comp);
     } else {
-        throw new Error(`handler not found for ${split.cmd}`);
+        throw new MIPSError(`not a pseudo instruction: ${split.cmd}`, SyntaxErrorCode.UNKNOWN_PSEUDO_INSTRUCTION);
     }
 }
 

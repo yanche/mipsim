@@ -36,7 +36,7 @@ const ch_7 = "7".charCodeAt(0);
 const ch_9 = "9".charCodeAt(0);
 const ch_a = "a".charCodeAt(0);
 const ch_f = "f".charCodeAt(0);
-export function parseAsciiStr(input: string): Byte[] {
+export function parseAsciiStr(input: string): { result?: Byte[]; err?: string } {
     const len = input.length;
     const ret: Byte[] = [];
     let idx = 0;
@@ -53,10 +53,10 @@ export function parseAsciiStr(input: string): Byte[] {
                         const c = q.toLowerCase().charCodeAt(0);
                         return (ch_0 <= c && c <= ch_9) || (ch_a <= c && c <= ch_f);
                     })) {
-                        ret.push(<Byte>byte.bitsNumFill(byte.numToBits(parseInt(next2nums, 16)), 8, false));
+                        ret.push(<Byte>byte.bitsNumFill(byte.numToBits(parseInt(next2nums, 16)).result, 8, false).bits);
                         idx += 3;
                     } else {
-                        throw new Error(`Invalid hexadecimal escape sequence: ${next2nums}`);
+                        return { err: `Invalid hexadecimal escape sequence: ${next2nums}` };
                     }
                 } else if (ch_0 <= nextch && nextch <= ch_7) {
                     let num = nextch - ch_0;
@@ -75,11 +75,11 @@ export function parseAsciiStr(input: string): Byte[] {
                             break;
                         }
                     }
-                    ret.push(<Byte>byte.bitsNumFill(byte.numToBits(num), 8, false));
+                    ret.push(<Byte>byte.bitsNumFill(byte.numToBits(num).result, 8, false).bits);
                     idx = tmpidx - 1;
                 } else {
                     if (escapeMap.has(next)) {
-                        ret.push(<Byte>byte.bitsNumFill(byte.numToBits(escapeMap.get(next)), 8, false));
+                        ret.push(<Byte>byte.bitsNumFill(byte.numToBits(escapeMap.get(next)).result, 8, false).bits);
                         ++idx;
                     }
                     // else, ignore the non-matching \
@@ -87,9 +87,9 @@ export function parseAsciiStr(input: string): Byte[] {
             }
             // ignore the last \
         } else {
-            ret.push(<Byte>byte.bitsNumFill(byte.numToBits(ch), 8, false));
+            ret.push(<Byte>byte.bitsNumFill(byte.numToBits(ch).result, 8, false).bits);
         }
         ++idx;
     }
-    return ret;
+    return { result: ret };
 }

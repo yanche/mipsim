@@ -71,7 +71,7 @@ describe("parse ascii test", () => {
 });
 
 function validate(asciiStr: string, toStr: string): void {
-    const asciiNums = parseAsciiStr(asciiStr).map(b => byte.bitsToNum(b, false));
+    const asciiNums = parseAsciiStr(asciiStr).result.map(b => byte.bitsToNum(b, false));
     const expectedNums = toStr.split("").map(c => c.charCodeAt(0));
     assert.strictEqual(asciiNums.length, expectedNums.length, `result string length: ${asciiNums.length}, expected string length: ${expectedNums.length}`);
     for (let i = 0; i < asciiNums.length; ++i) {

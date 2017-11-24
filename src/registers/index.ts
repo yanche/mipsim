@@ -1,6 +1,7 @@
 
 import { Word, HalfWord } from "../def";
 import { byte, flatten } from "../utility";
+import { MIPSError, RuntimeErrorCode } from "../error";
 
 interface Register {
     name: string;
@@ -96,7 +97,6 @@ nameMap.set("ra", REG.RA);
 
 export class Registers {
     private _map: Map<number, Register>;
-    private _namemap: Map<string, number>;
     private _word4: Word;
 
     public advancePC(): void {
@@ -114,7 +114,7 @@ export class Registers {
         if (reg) {
             return <Word>flatten(reg.value);
         } else {
-            throw new Error(`reg not found: ${regnum}`);
+            throw new MIPSError(`reg not found: ${regnum}`, RuntimeErrorCode.REG_NOT_FOUND);
         }
     }
 
@@ -123,13 +123,12 @@ export class Registers {
         if (reg) {
             reg.value = <Word>flatten(word);
         } else {
-            throw new Error(`reg not found: ${regnum}`);
+            throw new MIPSError(`reg not found: ${regnum}`, RuntimeErrorCode.REG_NOT_FOUND);
         }
     }
 
     constructor() {
         this._map = new Map<number, Register>();
-        this._namemap = new Map<string, number>();
         for (let regs of nameMap) {
             this._map.set(regs[1], {
                 name: regs[0],

@@ -42,9 +42,9 @@ export function bitsToNum(bits: Bit[], signed: boolean): number {
     }
 }
 
-export function numToBits(num: number): Bit[] {
+export function numToBits(num: number): { result?: Bit[], err?: string } {
     if (!validate.num(num, validate.NUM_FLAG.INT)) {
-        throw new Error(`input for numToBits must be an integer: ${num}`);
+        return { err: `input for numToBits must be an integer: ${num}` };
     }
     let neg = num < 0;
     num = Math.abs(num);
@@ -61,7 +61,7 @@ export function numToBits(num: number): Bit[] {
         while (!ret[i--] && i >= 0);
         while (i >= 0) { ret[i] = !ret[i]; --i; }
     }
-    return ret;
+    return { result: ret };
 }
 
 export function bits5ToRegNum(bits: Bit[], offset: number): number {
@@ -70,76 +70,77 @@ export function bits5ToRegNum(bits: Bit[], offset: number): number {
 
 // signed
 export function bitsAdd(bits1: Word, bits2: Word): {
-    result: Word;
-    overflow: boolean;
+    result?: Word;
+    overflow?: boolean;
+    err?: string;
 }
 export function bitsAdd(bits1: Bit[], bits2: Bit[]): {
-    result: Bit[];
-    overflow: boolean;
+    result?: Bit[];
+    overflow?: boolean;
+    err?: string;
 } {
     if (bits1.length !== bits2.length) {
-        throw new Error(`length different in bitsAdd, ${bits1.length}, ${bits2.length}`);
+        return { err: `length different in bitsAdd, ${bits1.length}, ${bits2.length}` };
     }
     const len = bits1.length;
     const result = new Array(len);
-    let carry = false;
+    let overflow = false;
     for (let i = len - 1; i >= 0; --i) {
         const b1 = bits1[i], b2 = bits2[i];
-        result[i] = (b1 !== b2) !== carry;
-        carry = (b1 && b2) || ((b1 !== b2) && carry);
+        result[i] = (b1 !== b2) !== overflow;
+        overflow = (b1 && b2) || ((b1 !== b2) && overflow);
     }
-    return {
-        result: result,
-        overflow: carry
-    };
+    return { result, overflow };
 }
 
-export function bitsAnd(bits1: Word, bits2: Word): Word;
-export function bitsAnd(bits1: Bit[], bits2: Bit[]): Bit[] {
+export function bitsAnd(bits1: Word, bits2: Word): { result?: Word; err?: string };
+export function bitsAnd(bits1: Bit[], bits2: Bit[]): { result?: Bit[]; err?: string } {
     if (bits1.length !== bits2.length) {
-        throw new Error(`length different in bitsAnd, ${bits1.length}, ${bits2.length}`);
+        return { err: `length different in bitsAnd, ${bits1.length}, ${bits2.length}` };
     }
     const len = bits1.length;
     const result = new Array(len);
     for (let i = 0; i < len; ++i) {
         result[i] = bits1[i] && bits2[i];
     }
-    return result;
+    return { result };
 }
 
-export function bitsOr(bits1: Word, bits2: Word): Word;
-export function bitsOr(bits1: Bit[], bits2: Bit[]): Bit[] {
+export function bitsOr(bits1: Word, bits2: Word): { result?: Word; err?: string };
+export function bitsOr(bits1: Bit[], bits2: Bit[]): { result?: Bit[]; err?: string } {
     if (bits1.length !== bits2.length) {
-        throw new Error(`length different in bitsOr, ${bits1.length}, ${bits2.length}`);
+        return { err: `length different in bitsOr, ${bits1.length}, ${bits2.length}` };
     }
     const len = bits1.length;
     const result = new Array(len);
     for (let i = 0; i < len; ++i) {
         result[i] = bits1[i] || bits2[i];
     }
-    return result;
+    return { result };
 }
 
-export function bitsXor(bits1: Word, bits2: Word): Word;
-export function bitsXor(bits1: Bit[], bits2: Bit[]): Bit[] {
+export function bitsXor(bits1: Word, bits2: Word): { result?: Word; err?: string };
+export function bitsXor(bits1: Bit[], bits2: Bit[]): { result?: Bit[]; err?: string } {
     if (bits1.length !== bits2.length) {
-        throw new Error(`length different in bitsXor, ${bits1.length}, ${bits2.length}`);
+        return { err: `length different in bitsXor, ${bits1.length}, ${bits2.length}` };
     }
     const len = bits1.length;
     const result = new Array(len);
     for (let i = 0; i < len; ++i) {
         result[i] = bits1[i] !== bits2[i]; // bits1[i] ^ bits2[i]
     }
-    return result;
+    return { result };
 }
 
-export function bitsEqual(bits1: Bit[], bits2: Bit[]): boolean {
+export function bitsEqual(bits1: Bit[], bits2: Bit[]): { equal?: boolean; err?: string } {
     if (bits1.length !== bits2.length) {
-        throw new Error(`length different in bitsEqual, ${bits1.length}, ${bits2.length}`);
+        return { err: `length different in bitsEqual, ${bits1.length}, ${bits2.length}` };
     }
-    return bits1.every((b, idx) => {
-        return b === bits2[idx];
-    });
+    return {
+        equal: bits1.every((b, idx) => {
+            return b === bits2[idx];
+        })
+    };
 }
 
 // export function bitsDiv(bits1: Word, bits2: Word): {
@@ -148,16 +149,17 @@ export function bitsEqual(bits1: Bit[], bits2: Bit[]): boolean {
 // }
 // bits1 / bits2
 export function bitsDiv(bits1: Word, bits2: Word, signed: boolean): {
-    quotient: Word;
-    remainder: Word;
+    quotient?: Word;
+    remainder?: Word;
+    err?: string;
 } {
     if (bits1.length !== bits2.length) {
-        throw new Error(`length different in bitsDiv, ${bits1.length}, ${bits2.length}`);
+        return { err: `length different in bitsDiv, ${bits1.length}, ${bits2.length}` };
     }
     const num1 = bitsToNum(bits1, signed), num2 = bitsToNum(bits2, signed);
     const r = num1 % num2;
     const q = (num1 - r) / num2;
-    let qbits = numToBits(q), rbits = numToBits(r);
+    let qbits = numToBits(q).result, rbits = numToBits(r).result;
     if (qbits.length < 32) {
         qbits = makeArray(32 - qbits.length, qbits[0]).concat(qbits);
     }
@@ -174,15 +176,16 @@ export function bitsDiv(bits1: Word, bits2: Word, signed: boolean): {
 
 // bits1 / bits2
 export function bitsMul(bits1: Word, bits2: Word, signed: boolean): {
-    high: Word;
-    low: Word;
+    high?: Word;
+    low?: Word;
+    err?: string;
 } {
     if (bits1.length !== bits2.length) {
-        throw new Error(`length different in bitsMul, ${bits1.length}, ${bits2.length}`);
+        return { err: `length different in bitsMul, ${bits1.length}, ${bits2.length}` };
     }
     const num1 = bitsToNum(bits1, signed), num2 = bitsToNum(bits2, signed);
     const mul = num1 * num2;
-    let bits = numToBits(mul);
+    let bits = numToBits(mul).result;
     if (bits.length < 64) {
         bits = makeArray(64 - bits.length, bits[0]).concat(bits);
     }
@@ -192,22 +195,22 @@ export function bitsMul(bits1: Word, bits2: Word, signed: boolean): {
     };
 }
 
-export function bitsNumFill(bitsOfNum: Bit[], lenToFill: number, signed: boolean): Bit[] {
+export function bitsNumFill(bitsOfNum: Bit[], lenToFill: number, signed: boolean): { bits?: Bit[]; err?: string } {
     if (bitsOfNum.length > lenToFill) {
         if (signed) {
-            throw new Error(`length of input bits is larger than the target: ${bitsOfNum.length}, ${lenToFill}`);
+            return { err: `length of input bits is larger than the target: ${bitsOfNum.length}, ${lenToFill}` };
         } else {
             const first1 = bitsOfNum.indexOf(true);
             const startIdx = bitsOfNum.length - lenToFill;
             if (first1 < startIdx) {
-                throw new Error(`length of input bits is larger than the target: ${bitsOfNum.length}, ${lenToFill}`);
+                return { err: `length of input bits is larger than the target: ${bitsOfNum.length}, ${lenToFill}` };
             } else {
                 // for unsigned integer
-                return bitsOfNum.slice(startIdx);
+                return { bits: bitsOfNum.slice(startIdx) };
             }
         }
     }
-    return makeArray(lenToFill - bitsOfNum.length, signed ? bitsOfNum[0] : false).concat(bitsOfNum);
+    return { bits: makeArray(lenToFill - bitsOfNum.length, signed ? bitsOfNum[0] : false).concat(bitsOfNum) };
 }
 
 export function bitsFrom01Str(strOf01: string): Bit[] {
@@ -238,7 +241,7 @@ export function byteToHexString(input: Byte): string {
 
 const hexMap = new Map<string, string>();
 for (let i = 0; i < 16; ++i) {
-    const binary = bitsNumFill(numToBits(i), 4, false).map(d => d ? "1" : "0").join("");
+    const binary = bitsNumFill(numToBits(i).result, 4, false).bits.map(d => d ? "1" : "0").join("");
     hexMap.set(binary, i.toString(16));
 }
 export function wordToHexString(word: Word): string {

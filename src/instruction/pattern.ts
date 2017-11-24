@@ -1,5 +1,7 @@
 
 import { getRegNumber } from "../registers";
+import { MIPSError, SyntaxErrorCode } from "../error";
+import { validate } from "../utility/index";
 
 export enum InstructionComponentPattern {
     REG = 1,
@@ -42,25 +44,23 @@ export interface PSEUDOADDR {
 export type LABEL = string;
 
 export function parseComponent(comp: string, pattern: InstructionComponentPattern): REG | IMM | ADDR | LABEL | PSEUDOADDR {
+    comp = comp.trim();
+    if (!comp) {
+        throw new Error(`empty component string is not accepted when parsing`);
+    }
     if (InstructionComponentPattern.REG & pattern) {
         if (comp[0] === "$") {
             const regname = comp.slice(1);
-            const regnum = getRegNumber(regname);
-            if (regnum === undefined) {
-                throw new Error(`invalid register: ${comp}`);
-            } else if (regnum < 0 || regnum > 31) {
-                throw new Error(`invalid register for operation: ${comp}`);
-            } else {
-                return <REG>{
-                    regNum: regnum,
-                    regName: regname
-                };
-            }
+            return <REG>{
+                regNum: getRegNum(regname, comp),
+                regName: regname
+            };
         }
     }
     if (InstructionComponentPattern.IMM & pattern) {
         const num = Number(comp);
         if (!isNaN(num)) {
+            validateIntOrThrow(num, comp);
             return <IMM>{
                 num: num
             };
@@ -68,19 +68,14 @@ export function parseComponent(comp: string, pattern: InstructionComponentPatter
     }
     if (InstructionComponentPattern.ADDR & pattern) {
         const idx = comp.indexOf("(");
-        if (idx >= 0 && idx < comp.length - 1 && comp[comp.length - 1] === ")") {
+        if (idx >= 0 && comp[comp.length - 1] === ")") {
             const num = Number(comp.slice(0, idx));
             const regstr = comp.slice(idx + 1, comp.length - 1);
             if (regstr[0] === "$" && !isNaN(num)) {
-                const regnum = getRegNumber(regstr.slice(1));
-                if (regnum === undefined) {
-                    throw new Error(`invalid register: ${comp}`);
-                } else {
-                    return <ADDR>{
-                        regNum: regnum,
-                        offset: num
-                    };
-                }
+                return <ADDR>{
+                    regNum: getRegNum(regstr.slice(1), comp),
+                    offset: num
+                };
             }
         }
     }
@@ -99,13 +94,15 @@ export function parseComponent(comp: string, pattern: InstructionComponentPatter
             // const(reg)
             // label + const(reg)
             if (comp[comp.length - 1] !== ")") {
-                throw new Error(`no matching closing parenthesis: ${comp}`);
+                throw new MIPSError(`no matching closing parenthesis: ${comp}`, SyntaxErrorCode.SYNTAX_ERROR);
             }
             const regstr = comp.slice(idx_lparen + 1, comp.length - 1);
             if (!regstr || regstr === "$" || regstr[0] !== "$") {
-                throw new Error(`invalid input for (reg) or const(reg): ${comp}`);
+                throw new MIPSError(`syntax error on register: ${comp}`, SyntaxErrorCode.SYNTAX_ERROR);
             }
             const regname = regstr.slice(1);
+            // try getRegNum, may throw exception
+            getRegNum(regname, comp);
             if (idx_lparen === 0) {
                 // (reg)
                 return <PSEUDOADDR>{
@@ -131,18 +128,21 @@ export function parseComponent(comp: string, pattern: InstructionComponentPatter
                         regName: regname
                     };
                 } else {
-                    throw new Error(`invalid component: ${comp}`);
+                    throw new MIPSError(`unknown instruction component: ${comp} for pseudo-addr pattern`, SyntaxErrorCode.UNKNOWN_INSTRUCTION);
                 }
             }
         }
     }
-    throw new Error(`input instruction component does not fall into any given pattern: ${comp}`);
+    throw new MIPSError(`unknown instruction component: ${comp} for given pattern, ${pattern}`, SyntaxErrorCode.UNKNOWN_INSTRUCTION);
+}
+
+function validateIntOrThrow(num: number, comp: string) {
+    if (!validate.num(num, validate.NUM_FLAG.INT)) {
+        throw new MIPSError(`only accept integer: ${comp}`, SyntaxErrorCode.IMM_NOT_INTEGER);
+    }
 }
 
 function parseLabelConst(comp: string): PSEUDOADDR {
-    if (!comp) {
-        throw new Error("empty component string is not accepted at parseLabelConst");
-    }
     // label
     // const
     // label + const
@@ -161,6 +161,7 @@ function parseLabelConst(comp: string): PSEUDOADDR {
                 label: comp
             };
         } else {
+            validateIntOrThrow(num, comp);
             return <PSEUDOADDR>{
                 type: PseudoAddr.CONST,
                 num: num
@@ -174,8 +175,9 @@ function parseLabelConst(comp: string): PSEUDOADDR {
         const numStr = comp[idxsign] + comp.slice(idxsign + 1).trim();
         const num = Number(numStr);
         if (isNaN(num)) {
-            throw new Error(`invalid input for label+cons or const type of pseudo-addr: ${comp}`);
+            throw new MIPSError(`unknown instruction component of pseudo-addr: ${comp}`, SyntaxErrorCode.UNKNOWN_INSTRUCTION);
         }
+        validateIntOrThrow(num, comp);
         if (label) {
             return <PSEUDOADDR>{
                 type: PseudoAddr.LABEL_CONST,
@@ -188,5 +190,16 @@ function parseLabelConst(comp: string): PSEUDOADDR {
                 num: num
             }
         }
+    }
+}
+
+function getRegNum(regname: string, comp: string): number {
+    const regnum = getRegNumber(regname);
+    if (regnum === undefined) {
+        throw new MIPSError(`invalid register: ${comp}`, SyntaxErrorCode.INVALID_REGISTER);
+    } else if (regnum < 0 || regnum > 31) {
+        throw new MIPSError(`invalid register for operation: ${comp}`, SyntaxErrorCode.INACCESSIBLE_REGISTER);
+    } else {
+        return regnum;
     }
 }
