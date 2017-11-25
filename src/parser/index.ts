@@ -19,6 +19,18 @@ interface CodeLineRep {
     targetCount: number;
 }
 
+function processAndCatchMIPSError(cb: () => void, lineNum: number) {
+    try {
+        cb();
+    }
+    catch (err) {
+        if (err instanceof MIPSError) {
+            err.lineNum = lineNum;
+        }
+        throw err;
+    }
+}
+
 export function parseMIPSCode(codelines: string[]): Memory {
     const firstInstAddr = parseInt("0x00400000", 16);
     const ctx: CodeContext = {
@@ -34,25 +46,34 @@ export function parseMIPSCode(codelines: string[]): Memory {
     while (i < len) {
         // first loop, get the total count of instructions
         // some instructions may be converted from pseudo instructions
-        const code = codelines[i];
-        const pseudo = isPesudoInstruction(code);
-        pseudoReplCollector[i++] = {
-            code: code,
-            pseudo: pseudo,
-            targetCount: pseudo ? pseudoGetCount(code) : 1
-        };
+        processAndCatchMIPSError(() => {
+            const code = codelines[i];
+            const pseudo = isPesudoInstruction(code);
+            pseudoReplCollector[i] = {
+                code: code,
+                pseudo: pseudo,
+                targetCount: pseudo ? pseudoGetCount(code) : 1
+            };
+        }, i);
+        ++i;
     }
     i = 0;
     while (i < len) {
         // second loop, label & data segment
-        parseNonTextCodeLine(pseudoReplCollector[i++], ctx, mem);
+        processAndCatchMIPSError(() => {
+            parseNonTextCodeLine(pseudoReplCollector[i], ctx, mem);
+        }, i);
+        ++i;
     }
     i = 0;
     ctx.textSeg = true;
     ctx.textPtr = firstInstAddr + 4;
     while (i < len) {
         // third loop, instruction(text) segment
-        parseTextCodeLine(pseudoReplCollector[i++], ctx, mem);
+        processAndCatchMIPSError(() => {
+            parseTextCodeLine(pseudoReplCollector[i], ctx, mem);
+        }, i);
+        ++i;
     }
     if (!ctx.labelMap.has("main")) {
         throw new MIPSError("main label was not declared", SyntaxErrorCode.NO_ENTRY);

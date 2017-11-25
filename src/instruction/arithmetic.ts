@@ -102,9 +102,13 @@ export const divu = new Instruction({
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
-        const result = byte.bitsDiv(regs.getVal(reg_s), regs.getVal(reg_t), false);
-        regs.setVal(REG.LO, result.quotient);
-        regs.setVal(REG.HI, result.remainder);
+        const val_t = regs.getVal(reg_t);
+        if (val_t.some(b => b)) {
+            // not 0
+            const result = byte.bitsDiv(regs.getVal(reg_s), val_t, false);
+            regs.setVal(REG.LO, result.quotient);
+            regs.setVal(REG.HI, result.remainder);
+        }
         regs.advancePC();
     },
     parser: genParserREG2("000000", "0000000000011011")
@@ -119,9 +123,14 @@ export const div = new Instruction({
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
-        const result = byte.bitsDiv(regs.getVal(reg_s), regs.getVal(reg_t), true);
-        regs.setVal(REG.LO, result.quotient);
-        regs.setVal(REG.HI, result.remainder);
+        const val_t = regs.getVal(reg_t);
+        if (val_t.some(b => b)) {
+            // not 0
+            const result = byte.bitsDiv(regs.getVal(reg_s), val_t, true);
+            regs.setVal(REG.LO, result.quotient);
+            regs.setVal(REG.HI, result.remainder);
+        }
+        // NOOP if divide-by-zero
         regs.advancePC();
     },
     parser: genParserREG2("000000", "0000000000011010")

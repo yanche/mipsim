@@ -3,6 +3,8 @@ export class MIPSError extends Error {
     constructor(msg: string, public errcode: number) {
         super(msg);
     }
+
+    public lineNum: number;
 }
 
 export const SyntaxErrorCode = {

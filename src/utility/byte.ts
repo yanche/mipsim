@@ -61,6 +61,10 @@ export function numToBits(num: number): { result?: Bit[], err?: string } {
         while (!ret[i--] && i >= 0);
         while (i >= 0) { ret[i] = !ret[i]; --i; }
     }
+    if (ret.length > 1 && ret[0] === ret[1]) {
+        // remove unnecessary sign bit
+        ret = ret.slice(1);
+    }
     return { result: ret };
 }
 
@@ -163,11 +167,11 @@ export function bitsDiv(bits1: Word, bits2: Word, signed: boolean): {
     if (qbits.length < 32) {
         qbits = makeArray(32 - qbits.length, qbits[0]).concat(qbits);
     }
-    qbits = qbits.slice(32);
+    qbits = qbits.slice(0, 32);
     if (rbits.length < 32) {
         rbits = makeArray(32 - rbits.length, rbits[0]).concat(rbits);
     }
-    rbits = rbits.slice(32);
+    rbits = rbits.slice(0, 32);
     return {
         quotient: <Word>qbits,
         remainder: <Word>rbits
@@ -183,15 +187,23 @@ export function bitsMul(bits1: Word, bits2: Word, signed: boolean): {
     if (bits1.length !== bits2.length) {
         return { err: `length different in bitsMul, ${bits1.length}, ${bits2.length}` };
     }
-    const num1 = bitsToNum(bits1, signed), num2 = bitsToNum(bits2, signed);
-    const mul = num1 * num2;
-    let bits = numToBits(mul).result;
-    if (bits.length < 64) {
-        bits = makeArray(64 - bits.length, bits[0]).concat(bits);
+    let neg = false;
+    if (signed) {
+        neg = bits1[0] !== bits2[0];
+        if (bits1[0]) {
+            bits1 = <Word>twosComplement(bits1);
+        }
+        if (bits2[0]) {
+            bits2 = <Word>twosComplement(bits2);
+        }
+    }
+    let result = bitsNumFill(unsignedBitsMul(bits1, bits2), 64, false).bits;
+    if (neg) {
+        result = twosComplement(result);
     }
     return {
-        high: <Word>bits.slice(32),
-        low: <Word>bits.slice(32)
+        high: <Word>result.slice(0, 32),
+        low: <Word>result.slice(32)
     };
 }
 
@@ -211,6 +223,13 @@ export function bitsNumFill(bitsOfNum: Bit[], lenToFill: number, signed: boolean
         }
     }
     return { bits: makeArray(lenToFill - bitsOfNum.length, signed ? bitsOfNum[0] : false).concat(bitsOfNum) };
+}
+
+export function twosComplement(bits: Bit[]): Bit[] {
+    const last1Idx = bits.lastIndexOf(true);
+    return bits.map((b, idx) => {
+        return last1Idx >= 0 && idx < last1Idx ? !b : b;
+    });
 }
 
 export function bitsFrom01Str(strOf01: string): Bit[] {
@@ -250,4 +269,33 @@ export function wordToHexString(word: Word): string {
         ret.push(hexMap.get(word.slice(i * 4, i * 4 + 4).map(d => d ? "1" : "0").join("")));
     }
     return ret.join("");
+}
+
+function unsignedBitsMul(bits1: Bit[], bits2: Bit[]): Bit[] {
+    if (bits1.filter(b => b).length < bits2.filter(b => b).length) {
+        const temp = bits1;
+        bits1 = bits2;
+        bits2 = temp;
+    }
+    let result: Bit[];
+    for (let i = bits2.length - 1; i >= 0; --i) {
+        if (bits2[i]) {
+            const addnum = bits1.concat(makeFalseArray(bits2.length - i - 1));
+            if (result) {
+                const maxlen = Math.max(result.length, addnum.length) + 1;
+                const rep1 = bitsNumFill(result, maxlen, false).bits;
+                const rep2 = bitsNumFill(addnum, maxlen, false).bits;
+                result = bitsAdd(<any>rep1, <any>rep2).result;
+                result = removeLeading0(result);
+            } else {
+                result = addnum;
+            }
+        }
+    }
+    return removeLeading0(result);
+}
+
+function removeLeading0(bits: Bit[]): Bit[] {
+    const idx1 = bits.indexOf(true);
+    return idx1 < 0 ? [true] : bits.slice(idx1);
 }
