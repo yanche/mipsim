@@ -8,13 +8,13 @@ import { genParserREG2LabelOffsetIMM16b, genParserREG1LabelOffsetIMM16b, makeIns
 
 // branches if the two registers are equal
 // beq $s, $t, label
-const beq = new Instruction({
+export const beq = new Instruction({
     name: "BEQ",
     pattern: "0001 00ss ssst tttt iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
-        if (byte.bitsEqual(regs.getVal(reg_s), regs.getVal(reg_t))) {
+        if (byte.bitsEqual(regs.getVal(reg_s), regs.getVal(reg_t)).equal) {
             // advance_pc(offset << 2)
             regs.advancePC16BitsOffset(<HalfWord>itrn.slice(16));
         } else {
@@ -26,7 +26,7 @@ const beq = new Instruction({
 
 // branches if the register is greater than or equal to zero
 // bgez $s, label
-const bgez = new Instruction({
+export const bgez = new Instruction({
     name: "BGEZ",
     pattern: "0000 01ss sss0 0001 iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -44,7 +44,7 @@ const bgez = new Instruction({
 
 // branches if the register is greater than or equal to zero and link
 // bgezal $s, label
-const bgezal = new Instruction({
+export const bgezal = new Instruction({
     name: "BGEZAL",
     pattern: "0000 01ss sss1 0001 iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -64,7 +64,7 @@ const bgezal = new Instruction({
 
 // branches if the register is greater than zero
 // bgtz $s, label
-const bgtz = new Instruction({
+export const bgtz = new Instruction({
     name: "BGTZ",
     pattern: "0001 11ss sss0 0000 iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -84,7 +84,7 @@ const bgtz = new Instruction({
 
 // branches if the register is less than or equal to zero
 // blez $s, label
-const blez = new Instruction({
+export const blez = new Instruction({
     name: "BLEZ",
     pattern: "0001 10ss sss0 0000 iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -103,7 +103,7 @@ const blez = new Instruction({
 
 // branches if the register is less than zero
 // bltz $s, label
-const bltz = new Instruction({
+export const bltz = new Instruction({
     name: "BLTZ",
     pattern: "0000 01ss sss0 0000 iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -121,7 +121,7 @@ const bltz = new Instruction({
 
 // branches if the register is less than zero and link
 // bltzal $s, label
-const bltzal = new Instruction({
+export const bltzal = new Instruction({
     name: "BLTZAL",
     pattern: "0000 01ss sss1 0000 iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -141,14 +141,14 @@ const bltzal = new Instruction({
 
 // branches if the two registers are not equal
 // bne $s, $t, label
-const bne = new Instruction({
+export const bne = new Instruction({
     name: "BNE",
     pattern: "0001 01ss ssst tttt iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
         // first bit is one means it's neg number
-        if (!byte.bitsEqual(regs.getVal(reg_s), regs.getVal(reg_t))) {
+        if (!byte.bitsEqual(regs.getVal(reg_s), regs.getVal(reg_t)).equal) {
             // advance_pc(offset << 2)
             regs.advancePC16BitsOffset(<HalfWord>itrn.slice(16));
         } else {
