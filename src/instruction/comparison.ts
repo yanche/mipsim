@@ -10,7 +10,7 @@ import { genParserREG3, genParserREG2IMM16b, makeInstructionNameMap } from "./ut
 // if $s < $t $d = 1; else $d = 0;
 // both $s and $t will be treated as signed
 // slt $d, $s, $t
-const slt = new Instruction({
+export const slt = new Instruction({
     name: "SLT",
     pattern: "0000 00ss ssst tttt dddd d000 0010 1010",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -33,7 +33,7 @@ const slt = new Instruction({
 // if $s < $t $d = 1; else $d = 0;
 // both $s and $t will be treated as unsigned
 // sltu $d, $s, $t
-const sltu = new Instruction({
+export const sltu = new Instruction({
     name: "SLTU",
     pattern: "0000 00ss ssst tttt dddd d000 0010 1011",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -56,7 +56,7 @@ const sltu = new Instruction({
 // if $s < imm $t = 1; else $t = 0;
 // both $s and imm will be treated as signed
 // slti $t, $s, imm
-const slti = new Instruction({
+export const slti = new Instruction({
     name: "SLTI",
     pattern: "0010 10ss ssst tttt iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -78,7 +78,7 @@ const slti = new Instruction({
 // if $s < imm $t = 1; else $t = 0;
 // both $s and imm will be treated as unsigned
 // sltiu $t, $s, imm
-const sltiu = new Instruction({
+export const sltiu = new Instruction({
     name: "SLTIU",
     pattern: "0010 11ss ssst tttt iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
