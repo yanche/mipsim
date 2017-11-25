@@ -52,7 +52,7 @@ export function genParserREG2IMM16b(leadingBits: string): Parser {
         return processComponents<[REG, REG, IMM]>(components, [CPattern.REG, CPattern.REG, CPattern.IMM], (comps: [REG, REG, IMM]) => {
             const regbits = (<[REG, REG]>comps.slice(0, 2)).map(com => byte.bitsNumFill(byte.numToBits(com.regNum).result, 5, false).bits);
             const imm = comps[2].num;
-            // register appear in first place (destination register) will be encoded first
+            // register appear in first place (destination register) will be encoded last
             return <Word>byte.bitsFrom01Str(leadingBits).concat(regbits[1]).concat(regbits[0]).concat(encodeIMM(imm, 16));
         });
     };
@@ -75,7 +75,8 @@ export function genParserREG2IMM5b(leadingBits: string, followingBits: string): 
         return processComponents<[REG, REG, IMM]>(components, [CPattern.REG, CPattern.REG, CPattern.IMM], (comps: [REG, REG, IMM]) => {
             const regbits = (<[REG, REG]>comps.slice(0, 2)).map(com => byte.bitsNumFill(byte.numToBits(com.regNum).result, 5, false).bits);
             const imm = comps[2].num;
-            return <Word>byte.bitsFrom01Str(leadingBits).concat(flatten(regbits)).concat(encodeIMM(imm, 5)).concat(byte.bitsFrom01Str(followingBits));
+            // register appear in first place (destination register) will be encoded last
+            return <Word>byte.bitsFrom01Str(leadingBits).concat(regbits[1]).concat(regbits[0]).concat(encodeIMM(imm, 5)).concat(byte.bitsFrom01Str(followingBits));
         });
     };
 }

@@ -200,7 +200,7 @@ export const ori = new Instruction({
     parser: genParserREG2IMM16b("001101")
 });
 
-// shifts a register value left by the shift amount listed in the instruction and places the result in a third register.
+// shifts a register value left by the shift amount listed in the instruction and places the result in a second register.
 // zeroes are shifted in
 // $d = $t << h
 // sll $d, $t, h
@@ -210,7 +210,7 @@ export const sll = new Instruction({
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_t = byte.bits5ToRegNum(itrn, 11);
         const reg_d = byte.bits5ToRegNum(itrn, 16);
-        const shiftLeft = byte.bits5ToRegNum(itrn, 21);
+        const shiftLeft = byte.bitsToNum(itrn.slice(21, 26), false);
         const data = <Word>regs.getVal(reg_t).slice(shiftLeft).concat(byte.makeFalseArray(shiftLeft));
         regs.setVal(reg_d, data);
         regs.advancePC();
@@ -247,9 +247,9 @@ export const sra = new Instruction({
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_t = byte.bits5ToRegNum(itrn, 11);
         const reg_d = byte.bits5ToRegNum(itrn, 16);
-        const shiftRight = byte.bits5ToRegNum(itrn, 21);
+        const shiftRight = byte.bitsToNum(itrn.slice(21, 26), false);
         const reg_t_data = regs.getVal(reg_t);
-        const data = <Word>byte.makeArray(shiftRight, reg_t_data[0]).concat(reg_t_data.slice(0, -shiftRight));
+        const data = shiftRight ? <Word>byte.makeArray(shiftRight, reg_t_data[0]).concat(reg_t_data.slice(0, -shiftRight)) : reg_t_data;
         regs.setVal(reg_d, data);
         regs.advancePC();
     },
@@ -266,9 +266,9 @@ export const srl = new Instruction({
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_t = byte.bits5ToRegNum(itrn, 11);
         const reg_d = byte.bits5ToRegNum(itrn, 16);
-        const shiftRight = byte.bits5ToRegNum(itrn, 21);
+        const shiftRight = byte.bitsToNum(itrn.slice(21, 26), false);
         const reg_t_data = regs.getVal(reg_t);
-        const data = <Word>byte.makeFalseArray(shiftRight).concat(reg_t_data.slice(0, -shiftRight));
+        const data = shiftRight ? <Word>byte.makeFalseArray(shiftRight).concat(reg_t_data.slice(0, -shiftRight)) : reg_t_data;
         regs.setVal(reg_d, data);
         regs.advancePC();
     },
@@ -288,7 +288,7 @@ export const srlv = new Instruction({
         const reg_d = byte.bits5ToRegNum(itrn, 16);
         const shiftRight = byte.bitsToNum(regs.getVal(reg_s), false);
         const reg_t_data = regs.getVal(reg_t);
-        const data = <Word>byte.makeFalseArray(shiftRight).concat(reg_t_data.slice(0, -shiftRight));
+        const data = shiftRight ? <Word>byte.makeFalseArray(shiftRight).concat(reg_t_data.slice(0, -shiftRight)) : reg_t_data;
         regs.setVal(reg_d, data);
         regs.advancePC();
     },

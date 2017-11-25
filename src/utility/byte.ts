@@ -184,9 +184,9 @@ export function bitsMul(bits1: Word, bits2: Word, signed: boolean): {
     low?: Word;
     err?: string;
 } {
-    if (bits1.length !== bits2.length) {
-        return { err: `length different in bitsMul, ${bits1.length}, ${bits2.length}` };
-    }
+    // if (bits1.length !== bits2.length) {
+    //      return { err: `length different in bitsMul, ${bits1.length}, ${bits2.length}` };
+    // }
     let neg = false;
     if (signed) {
         neg = bits1[0] !== bits2[0];
