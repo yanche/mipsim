@@ -7,7 +7,7 @@ import { byte } from "../../utility";
 import { Word, Bit } from "../../def";
 import { MIPSError } from "../../error";
 
-export function singleInstructionTest(inst: Instruction, comp: string, regValues: [REG, number, number][], errcode: number): void;
+export function singleInstructionTest(inst: Instruction, comp: string, regValues: [REG, number, number][], errcode: number, instAddr?: number, labelMap?: Map<string, number>): void;
 export function singleInstructionTest(inst: Instruction, comp: string, regValues: [REG, number, number][], haltAfter?: boolean, instAddr?: number, labelMap?: Map<string, number>): void;
 export function singleInstructionTest(inst: Instruction, comp: string, regValues: [REG, number, number][], haltAfterOrErrCode?: boolean | number, instAddr: number = 0, labelMap: Map<string, number> = new Map<string, number>()): void {
     if (haltAfterOrErrCode === undefined) {

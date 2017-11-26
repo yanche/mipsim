@@ -8,7 +8,7 @@ import { genParserREG1, genParserLabelIMM26b, makeInstructionNameMap } from "./u
 
 // jumps to the calculated address
 // j target
-const j = new Instruction({
+export const j = new Instruction({
     name: "J",
     pattern: "0000 10ii iiii iiii iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -20,7 +20,7 @@ const j = new Instruction({
 
 // jumps to the calculated address and link
 // jal target
-const jal = new Instruction({
+export const jal = new Instruction({
     name: "JAL",
     pattern: "0000 11ii iiii iiii iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -34,7 +34,7 @@ const jal = new Instruction({
 
 // jumps to the address contained in register $s
 // 	jr $s
-const jr = new Instruction({
+export const jr = new Instruction({
     name: "JR",
     pattern: "0000 00ss sss0 0000 0000 0000 0000 1000",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {

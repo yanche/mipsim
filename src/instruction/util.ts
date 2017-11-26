@@ -135,9 +135,12 @@ export function genParserREG2LabelOffsetIMM16b(leadingBits: string): Parser {
 
 export function genParserLabelIMM26b(leadingBits: string): Parser {
     return (components: string, addr: number, labelMap: Map<string, number>, generated?: boolean): Word => {
-        return processComponents<[LABEL | IMM]>(components, [CPattern.LABEL | CPattern.IMM], (comps: [LABEL | IMM]) => {
+        return processComponents<[LABEL]>(components, [CPattern.LABEL], (comps: [LABEL]) => {
             const label = comps[0];
-            const imm = getOffsetToLabel(addr, label, labelMap, generated);
+            if (!labelMap.has(label)) {
+                throw new MIPSError(`cannot find label: ${label}`, SyntaxErrorCode.LABEL_NOT_FOUND);
+            }
+            const imm = labelMap.get(label) / 4;
             return <Word>byte.bitsFrom01Str(leadingBits).concat(encodeIMM(imm, 26));
         });
     };
