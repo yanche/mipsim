@@ -1,8 +1,53 @@
 
-import { addu, addiu, and, andi, divu, div, multu, mult, or, ori, sll, sllv, sra, srl, srlv, subu, xor, xori } from "../../arithmetic";
+import { add, addu, addi, addiu, and, andi, divu, div, multu, mult, or, ori, sll, sllv, sra, srl, srlv, sub, subu, xor, xori } from "../../arithmetic";
 import { singleInstructionTest } from "../util";
 import { REG } from "../../../registers";
-import { SyntaxErrorCode } from "../../../error";
+import { SyntaxErrorCode, RuntimeErrorCode } from "../../../error";
+
+describe("add test", () => {
+    it("1 + 2 = 3", () => {
+        singleInstructionTest(add, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, 3],
+            [REG.T1, 1, 1],
+            [REG.T2, 2, 2],
+        ]);
+    });
+
+    it("0xffffffff + 1 = 0", () => {
+        singleInstructionTest(add, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, 0],
+            [REG.T1, -1, -1],
+            [REG.T2, 1, 1],
+        ]);
+    });
+
+    it("0xffffffff + 0xffffffff = 0xffffFFFE", () => {
+        singleInstructionTest(add, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, -2],
+            [REG.T1, -1, -1],
+            [REG.T2, -1, -1],
+        ]);
+    });
+
+    it("0x7fffffff + 1, overflow", () => {
+        singleInstructionTest(add, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T1, parseInt("0x7fffffff"), parseInt("0x7fffffff")],
+            [REG.T2, 1, 1],
+        ], RuntimeErrorCode.ARITHMETIC_OVERFLOW);
+    });
+
+    it("0x80000000 + -1, overflow", () => {
+        singleInstructionTest(add, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T1, parseInt("0x80000000"), parseInt("0x80000000")],
+            [REG.T2, -1, -1],
+        ], RuntimeErrorCode.ARITHMETIC_OVERFLOW);
+    });
+});
 
 describe("addu test", () => {
     it("1 + 2 = 3", () => {
@@ -14,7 +59,7 @@ describe("addu test", () => {
         ]);
     });
 
-    it("0xFFFFFFFF + 1 = 0", () => {
+    it("0xffffffff + 1 = 0", () => {
         singleInstructionTest(addu, "$t0, $t1, $t2", [
             [REG.PC, 4, 8],
             [REG.T0, 0, 0],
@@ -23,11 +68,29 @@ describe("addu test", () => {
         ]);
     });
 
-    it("0xFFFFFFFF + 0xFFFFFFFF = 0xFFFFFFFE", () => {
+    it("0xffffffff + 0xffffffff = 0xffffFFFE", () => {
         singleInstructionTest(addu, "$t0, $t1, $t2", [
             [REG.PC, 4, 8],
             [REG.T0, 0, -2],
             [REG.T1, -1, -1],
+            [REG.T2, -1, -1],
+        ]);
+    });
+
+    it("0x7fffffff + 1 = 0x80000000", () => {
+        singleInstructionTest(addu, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, parseInt("0x80000000")],
+            [REG.T1, parseInt("0x7fffffff"), parseInt("0x7fffffff")],
+            [REG.T2, 1, 1],
+        ]);
+    });
+
+    it("0x80000000 + -1, overflow", () => {
+        singleInstructionTest(addu, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, parseInt("0x7fffffff")],
+            [REG.T1, parseInt("0x80000000"), parseInt("0x80000000")],
             [REG.T2, -1, -1],
         ]);
     });
@@ -42,7 +105,7 @@ describe("addiu test", () => {
         ]);
     });
 
-    it("0xFFFFFFFF + 1(IMM) = 0", () => {
+    it("0xffffffff + 1(IMM) = 0", () => {
         singleInstructionTest(addiu, "$t0, $t1, 1", [
             [REG.PC, 4, 8],
             [REG.T0, 0, 0],
@@ -50,7 +113,7 @@ describe("addiu test", () => {
         ]);
     });
 
-    it("0xFFFFFFFF + 0xFFFF(IMM) = 0xFFFFFFFE", () => {
+    it("0xffffffff + 0xffff(IMM) = 0xffffFFFE", () => {
         singleInstructionTest(addiu, "$t0, $t1, -1", [
             [REG.PC, 4, 8],
             [REG.T0, 0, -2],
@@ -80,6 +143,86 @@ describe("addiu test", () => {
 
     it("encoding -32769 throws error", () => {
         singleInstructionTest(addiu, "$t0, $t1, -32769", [], SyntaxErrorCode.NUM_OVERFLOW);
+    });
+});
+
+describe("addi test", () => {
+    it("1 + 2(IMM) = 3", () => {
+        singleInstructionTest(addi, "$t0, $t1, 2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, 3],
+            [REG.T1, 1, 1],
+        ]);
+    });
+
+    it("0xffffffff + 1(IMM) = 0", () => {
+        singleInstructionTest(addi, "$t0, $t1, 1", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, 0],
+            [REG.T1, -1, -1],
+        ]);
+    });
+
+    it("0xffffffff + 0xffff(IMM) = 0xffffFFFE", () => {
+        singleInstructionTest(addi, "$t0, $t1, -1", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, -2],
+            [REG.T1, -1, -1],
+        ]);
+    });
+
+    it("1 + -32768(IMM) = -32767", () => {
+        singleInstructionTest(addi, "$t0, $t1, -32768", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, -32767],
+            [REG.T1, 1, 1],
+        ]);
+    });
+
+    it("2 + 65535(IMM) = 1, 65535 will be treated as -1", () => {
+        singleInstructionTest(addi, "$t0, $t1, 65535", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, 1],
+            [REG.T1, 2, 2],
+        ]);
+    });
+
+    it("encoding 65536 throws error", () => {
+        singleInstructionTest(addi, "$t0, $t1, 65536", [], SyntaxErrorCode.NUM_OVERFLOW);
+    });
+
+    it("encoding -32769 throws error", () => {
+        singleInstructionTest(addi, "$t0, $t1, -32769", [], SyntaxErrorCode.NUM_OVERFLOW);
+    });
+
+    it("0x7fffffff + 1(IMM), overflow", () => {
+        singleInstructionTest(addi, "$t0, $t1, 1", [
+            [REG.PC, 4, 8],
+            [REG.T1, parseInt("0x7fffffff"), parseInt("0x7fffffff")],
+        ], RuntimeErrorCode.ARITHMETIC_OVERFLOW);
+    });
+
+    it("1 + 0x7fff = 0x8000", () => {
+        singleInstructionTest(addi, "$t0, $t1, 0x7fff", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, parseInt("0x8000")],
+            [REG.T1, 1, 1],
+        ]);
+    });
+
+    it("0x80000000 + -1(IMM), overflow", () => {
+        singleInstructionTest(addi, "$t0, $t1, -1", [
+            [REG.PC, 4, 8],
+            [REG.T1, parseInt("0x80000000"), parseInt("0x80000000")],
+        ], RuntimeErrorCode.ARITHMETIC_OVERFLOW);
+    });
+
+    it("-1 + 0x8000 = 0xffff7fff", () => {
+        singleInstructionTest(addi, "$t0, $t1, 0x8000", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, parseInt("0xffff7fff")],
+            [REG.T1, -1, -1],
+        ]);
     });
 });
 
@@ -120,7 +263,7 @@ describe("andi test", () => {
         ]);
     });
 
-    it("0xFFFFFFFF & 0xFFFF(IMM) = 0x0000FFFF", () => {
+    it("0xffffffff & 0xffff(IMM) = 0x0000FFFF", () => {
         singleInstructionTest(andi, "$t0, $t1, -1", [
             [REG.PC, 4, 8],
             [REG.T0, 0, 65535],
@@ -128,7 +271,7 @@ describe("andi test", () => {
         ]);
     });
 
-    it("0xFFFFFFFF & 65535(IMM) = 0x0000FFFF", () => {
+    it("0xffffffff & 65535(IMM) = 0x0000FFFF", () => {
         singleInstructionTest(andi, "$t0, $t1, 65535", [
             [REG.PC, 4, 8],
             [REG.T0, 0, 65535],
@@ -421,7 +564,7 @@ describe("ori test", () => {
         ]);
     });
 
-    it("0xFFFFFFFF & 0xFFFF(IMM) = 0xFFFFFFFF", () => {
+    it("0xffffffff & 0xffff(IMM) = 0xffffffff", () => {
         singleInstructionTest(ori, "$t0, $t1, -1", [
             [REG.PC, 4, 8],
             [REG.T0, 0, -1],
@@ -429,7 +572,7 @@ describe("ori test", () => {
         ]);
     });
 
-    it("0xFFFFFFFF & 65535(IMM) = 0xFFFFFFFF", () => {
+    it("0xffffffff & 65535(IMM) = 0xffffffff", () => {
         singleInstructionTest(ori, "$t0, $t1, 65535", [
             [REG.PC, 4, 8],
             [REG.T0, 0, -1],
@@ -759,6 +902,112 @@ describe("subu test", () => {
             [REG.T2, 1, 1],
         ]);
     });
+
+    it("1 - (-5) = 6", () => {
+        singleInstructionTest(subu, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, 6],
+            [REG.T1, 1, 1],
+            [REG.T2, -5, -5],
+        ]);
+    });
+
+    it("-5 - (-7) = 2", () => {
+        singleInstructionTest(subu, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, 2],
+            [REG.T1, -5, -5],
+            [REG.T2, -7, -7],
+        ]);
+    });
+
+    it("-7 - (-5) = -2", () => {
+        singleInstructionTest(subu, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, -2],
+            [REG.T1, -7, -7],
+            [REG.T2, -5, -5],
+        ]);
+    });
+});
+
+describe("sub test", () => {
+    it("3 - 2 = 1", () => {
+        singleInstructionTest(sub, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, 1],
+            [REG.T1, 3, 3],
+            [REG.T2, 2, 2],
+        ]);
+    });
+
+    it("0 - 1 = -1", () => {
+        singleInstructionTest(sub, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, -1],
+            [REG.T1, 0, 0],
+            [REG.T2, 1, 1],
+        ]);
+    });
+
+    it("1 - (-5) = 6", () => {
+        singleInstructionTest(sub, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, 6],
+            [REG.T1, 1, 1],
+            [REG.T2, -5, -5],
+        ]);
+    });
+
+    it("-5 - (-7) = 2", () => {
+        singleInstructionTest(sub, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, 2],
+            [REG.T1, -5, -5],
+            [REG.T2, -7, -7],
+        ]);
+    });
+
+    it("-7 - (-5) = -2", () => {
+        singleInstructionTest(sub, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T0, 0, -2],
+            [REG.T1, -7, -7],
+            [REG.T2, -5, -5],
+        ]);
+    });
+
+    it("0x80000000 - 1, overflow", () => {
+        singleInstructionTest(sub, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T1, parseInt("0x80000000"), parseInt("0x80000000")],
+            [REG.T2, 1, 1],
+        ], RuntimeErrorCode.ARITHMETIC_OVERFLOW);
+    });
+
+    it("0x8000000 - 0x7fffffff, overflow", () => {
+        singleInstructionTest(sub, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T1, parseInt("0x80000000"), parseInt("0x80000000")],
+            [REG.T2, parseInt("0x7fffffff"), parseInt("0x7fffffff")],
+        ], RuntimeErrorCode.ARITHMETIC_OVERFLOW);
+    });
+
+    it("0x7fffffff - (-1), overflow", () => {
+        singleInstructionTest(sub, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T1, parseInt("0x7fffffff"), parseInt("0x7fffffff")],
+            [REG.T2, -1, -1],
+        ], RuntimeErrorCode.ARITHMETIC_OVERFLOW);
+    });
+
+    it("0x7fffffff - 0x8000000, overflow", () => {
+        singleInstructionTest(sub, "$t0, $t1, $t2", [
+            [REG.PC, 4, 8],
+            [REG.T1, parseInt("0x7fffffff"), parseInt("0x7fffffff")],
+            [REG.T2, parseInt("0x80000000"), parseInt("0x80000000")],
+        ], RuntimeErrorCode.ARITHMETIC_OVERFLOW);
+    });
 });
 
 describe("xor test", () => {
@@ -798,18 +1047,18 @@ describe("xori test", () => {
         ]);
     });
 
-    it("0xFFFFFFFF ^ 0xFFFF(IMM) = 0xFFFF0000", () => {
+    it("0xffffffff ^ 0xffff(IMM) = 0xffff0000", () => {
         singleInstructionTest(xori, "$t0, $t1, -1", [
             [REG.PC, 4, 8],
-            [REG.T0, 0, parseInt("0xFFFF0000")],
+            [REG.T0, 0, parseInt("0xffff0000")],
             [REG.T1, -1, -1],
         ]);
     });
 
-    it("0xFFFFFFFF & 65535(IMM) = 0xFFFF0000", () => {
+    it("0xffffffff & 65535(IMM) = 0xffff0000", () => {
         singleInstructionTest(xori, "$t0, $t1, 65535", [
             [REG.PC, 4, 8],
-            [REG.T0, 0, parseInt("0xFFFF0000")],
+            [REG.T0, 0, parseInt("0xffff0000")],
             [REG.T1, -1, -1],
         ]);
     });

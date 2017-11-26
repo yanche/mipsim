@@ -33,4 +33,5 @@ export const RuntimeErrorCode = {
     NOT_YET_IMPLEMENTED: 2001,
     REG_NOT_FOUND: 2002,
     UNALIGNED_MEM_ACCESS: 2003,
+    ARITHMETIC_OVERFLOW: 2004,
 }

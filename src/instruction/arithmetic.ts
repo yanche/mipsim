@@ -5,6 +5,7 @@ import Memory from "../memory";
 import { Instruction } from "./def";
 import { byte } from "../utility";
 import { genParserREG3, genParserREG2IMM16b, genParserREG2, genParserREG2IMM5b, makeInstructionNameMap } from "./util";
+import { MIPSError, RuntimeErrorCode } from "../error/index";
 
 // $d = $s + $t
 // add $d, $s, $t
@@ -12,10 +13,17 @@ export const add = new Instruction({
     name: "ADD",
     pattern: "0000 00ss ssst tttt dddd d000 0010 0000",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
-        // const reg_s = bits5ToRegNum(itrn, 6);
-        // const reg_t = bits5ToRegNum(itrn, 11);
-        // const reg_d = bits5ToRegNum(itrn, 16);
-        // regs.setVal(reg_d, regs.getVal(reg_s) + regs.getVal(reg_t))
+        const reg_s = byte.bits5ToRegNum(itrn, 6);
+        const reg_t = byte.bits5ToRegNum(itrn, 11);
+        const reg_d = byte.bits5ToRegNum(itrn, 16);
+        const val_s = regs.getVal(reg_s);
+        const val_t = regs.getVal(reg_t);
+        const result = byte.bitsAdd(val_s, val_t).result;
+        if (val_s[0] === val_t[0] && val_s[0] !== result[0]) {
+            throw new MIPSError(`arithmetic overflow when adding: 0x${byte.wordToHexString(val_s)} and 0x${byte.wordToHexString(val_t)}`, RuntimeErrorCode.ARITHMETIC_OVERFLOW);
+        }
+        regs.setVal(reg_d, result);
+        regs.advancePC();
     },
     parser: genParserREG3("000000", "00000100000")
 });
@@ -29,8 +37,8 @@ export const addu = new Instruction({
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
         const reg_d = byte.bits5ToRegNum(itrn, 16);
-        const add = byte.bitsAdd(regs.getVal(reg_s), regs.getVal(reg_t));
-        regs.setVal(reg_d, add.result);
+        const result = byte.bitsAdd(regs.getVal(reg_s), regs.getVal(reg_t)).result;
+        regs.setVal(reg_d, result);
         regs.advancePC();
     },
     parser: genParserREG3("000000", "00000100001")
@@ -42,7 +50,16 @@ export const addi = new Instruction({
     name: "ADDI",
     pattern: "0010 00ss ssst tttt iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
-        // NOT IMPLEMENTED
+        const reg_s = byte.bits5ToRegNum(itrn, 6);
+        const reg_t = byte.bits5ToRegNum(itrn, 11);
+        const val_s = regs.getVal(reg_s);
+        const val_i = <Word>byte.makeArray(16, itrn[16]).concat(itrn.slice(16));
+        const result = byte.bitsAdd(val_s, val_i).result;
+        if (val_s[0] === val_i[0] && val_s[0] !== result[0]) {
+            throw new MIPSError(`arithmetic overflow when adding: 0x${byte.wordToHexString(val_s)} and 0x${byte.wordToHexString(val_i)}`, RuntimeErrorCode.ARITHMETIC_OVERFLOW);
+        }
+        regs.setVal(reg_t, result);
+        regs.advancePC();
     },
     parser: genParserREG2IMM16b("001000")
 });
@@ -55,8 +72,8 @@ export const addiu = new Instruction({
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         const reg_s = byte.bits5ToRegNum(itrn, 6);
         const reg_t = byte.bits5ToRegNum(itrn, 11);
-        const add = byte.bitsAdd(regs.getVal(reg_s), <Word>byte.makeArray(16, itrn[16]).concat(itrn.slice(16)));
-        regs.setVal(reg_t, add.result);
+        const result = byte.bitsAdd(regs.getVal(reg_s), <Word>byte.makeArray(16, itrn[16]).concat(itrn.slice(16))).result;
+        regs.setVal(reg_t, result);
         regs.advancePC();
     },
     parser: genParserREG2IMM16b("001001")
@@ -302,12 +319,18 @@ export const sub = new Instruction({
     name: "SUB",
     pattern: "0000 00ss ssst tttt dddd d000 0010 0010",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
-        // const reg_s = byte.bits5ToRegNum(itrn, 6);
-        // const reg_t = byte.bits5ToRegNum(itrn, 11);
-        // const reg_d = byte.bits5ToRegNum(itrn, 16);
-        // const add = byte.bitsAdd(regs.getVal(reg_s), regs.getVal(reg_t));
-        // regs.setVal(reg_d, add.result);
-        // regs.advancePC();
+        const reg_s = byte.bits5ToRegNum(itrn, 6);
+        const reg_t = byte.bits5ToRegNum(itrn, 11);
+        const reg_d = byte.bits5ToRegNum(itrn, 16);
+        const val_s = regs.getVal(reg_s);
+        const val_t = regs.getVal(reg_t);
+        const num_d = byte.bitsToNum(val_s, true) - byte.bitsToNum(val_t, true);
+        const bits_d = byte.bitsNumFill(byte.numToBits(num_d).result, 33, true).bits;
+        if (bits_d[0] !== bits_d[1]) {
+            throw new MIPSError(`arithmetic overflow on substraction, 0x${byte.wordToHexString(val_s)} - ${byte.wordToHexString(val_t)}`, RuntimeErrorCode.ARITHMETIC_OVERFLOW);
+        }
+        regs.setVal(reg_d, <Word>bits_d.slice(1));
+        regs.advancePC();
     },
     parser: genParserREG3("000000", "00000100010")
 });
@@ -328,6 +351,8 @@ export const subu = new Instruction({
         let bits_d = byte.numToBits(num_d).result;
         if (bits_d.length < 32) {
             bits_d = byte.makeArray(32 - bits_d.length, bits_d[0]).concat(bits_d);
+        } else {
+            bits_d = bits_d.slice(bits_d.length - 32);
         }
         regs.setVal(reg_d, <Word>bits_d);
         regs.advancePC();
