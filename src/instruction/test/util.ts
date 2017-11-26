@@ -7,21 +7,29 @@ import { byte } from "../../utility";
 import { Word, Bit } from "../../def";
 import { MIPSError } from "../../error";
 
-export function singleInstructionTest(inst: Instruction, comp: string, regValues: [REG, number, number][], errcode: number, instAddr?: number, labelMap?: Map<string, number>): void;
-export function singleInstructionTest(inst: Instruction, comp: string, regValues: [REG, number, number][], haltAfter?: boolean, instAddr?: number, labelMap?: Map<string, number>): void;
-export function singleInstructionTest(inst: Instruction, comp: string, regValues: [REG, number, number][], haltAfterOrErrCode?: boolean | number, instAddr: number = 0, labelMap: Map<string, number> = new Map<string, number>()): void {
+export function singleInstructionTest(inst: Instruction, comp: string, regValues: [REG | string, number, number][], errcode: number, instAddr?: number, labelMap?: Map<string, number>): void;
+export function singleInstructionTest(inst: Instruction, comp: string, regValues: [REG | string, number, number][], haltAfter?: boolean, instAddr?: number, labelMap?: Map<string, number>): void;
+export function singleInstructionTest(inst: Instruction, comp: string, regValues: [REG | string, number, number][], haltAfterOrErrCode?: boolean | number, instAddr: number = 0, labelMap: Map<string, number> = new Map<string, number>()): void {
     if (haltAfterOrErrCode === undefined) {
         haltAfterOrErrCode = false;
     }
     const regs = new Registers();
+    const mem = new Memory();
     for (let r of regValues) {
+        const locator = r[0];
         if (r[1] !== undefined) {
-            regs.setVal(r[0], <Word>byte.bitsNumFill(byte.numToBits(r[1]).result, 33, true).bits.slice(1));
+            const bitsVal = <Word>byte.bitsNumFill(byte.numToBits(r[1]).result, 33, true).bits.slice(1);
+            if (typeof locator === "string") {
+                const addr = <Word>byte.bitsNumFill(byte.numToBits(parseInt(locator)).result, 33, false).bits.slice(1);
+                mem.writeWord(addr, bitsVal);
+            } else {
+                regs.setVal(locator, bitsVal);
+            }
         }
     }
     if (typeof haltAfterOrErrCode === "number") {
         try {
-            inst.execute(inst.parse(comp, instAddr, labelMap), new Memory(), regs);
+            inst.execute(inst.parse(comp, instAddr, labelMap), mem, regs);
             assert.ok(false, `receive no error when error with code: ${haltAfterOrErrCode} is expected`);
         }
         catch (err) {
@@ -32,12 +40,20 @@ export function singleInstructionTest(inst: Instruction, comp: string, regValues
             }
         }
     } else {
-        const halt = inst.execute(inst.parse(comp, instAddr, labelMap), new Memory(), regs);
+        const halt = inst.execute(inst.parse(comp, instAddr, labelMap), mem, regs);
         for (let r of regValues) {
+            const locator = r[0];
             if (r[2] !== undefined) {
+                let actualWord: Word;
+                if (typeof locator === "string") {
+                    const addr = <Word>byte.bitsNumFill(byte.numToBits(parseInt(locator)).result, 33, false).bits.slice(1);
+                    actualWord = mem.readWord(addr);
+                } else {
+                    actualWord = regs.getVal(locator);
+                }
+                const actual = byte.wordToHexString(actualWord);
                 const expected = byte.wordToHexString(<Word>byte.bitsNumFill(byte.numToBits(r[2]).result, 33, true).bits.slice(1));
-                const actual = byte.wordToHexString(regs.getVal(r[0]));
-                assert.strictEqual(actual, expected, `register value not expected: ${REG[r[0]]}, actual: 0x${actual}, expected: 0x${expected}`);
+                assert.strictEqual(actual, expected, `${typeof locator === "string" ? "memory" : "register"} value not expected: ${typeof locator === "string" ? locator : REG[locator]}, actual: 0x${actual}, expected: 0x${expected}`);
             }
         }
         assert.strictEqual(halt, haltAfterOrErrCode, "halt status not expected");

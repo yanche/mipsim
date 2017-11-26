@@ -32,4 +32,5 @@ export const RuntimeErrorCode = {
     UNKNOWN_INSTRUCTION: 2000,
     NOT_YET_IMPLEMENTED: 2001,
     REG_NOT_FOUND: 2002,
+    UNALIGNED_MEM_ACCESS: 2003,
 }

@@ -5,11 +5,12 @@ import Memory from "../memory";
 import { Instruction } from "./def";
 import { byte } from "../utility";
 import { genParserREG1IMM16b, genParserREG1Addr16b, makeInstructionNameMap } from "./util";
+import { RuntimeErrorCode, MIPSError } from "../error";
 
 // a byte is loaded into a register from the specified address
 // $t = MEM[$s + imm]
 // lb $t, offset($s)
-const lb = new Instruction({
+export const lb = new Instruction({
     name: "LB",
     pattern: "1000 00ss ssst tttt iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -29,7 +30,7 @@ const lb = new Instruction({
 // $t = (imm << 16)
 // imm is unsigned integer
 // lui $t, imm
-const lui = new Instruction({
+export const lui = new Instruction({
     name: "LUI",
     pattern: "0011 11-- ---t tttt iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -44,7 +45,7 @@ const lui = new Instruction({
 // a word is loaded into a register from the specified address
 // $t = MEM[$s + offset]
 // lw $t, offset($s)
-const lw = new Instruction({
+export const lw = new Instruction({
     name: "LW",
     pattern: "1000 11ss ssst tttt iiii iiii iiii iiii",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -53,6 +54,9 @@ const lw = new Instruction({
         const imm = itrn.slice(16);
         const offset = <Word>byte.makeArray(16, imm[0]).concat(imm);
         const addr = byte.bitsAdd(regs.getVal(reg_s), offset).result;
+        if (addr[31] || addr[30]) {
+            throw new MIPSError(`unaligned address access for a word(4-bytes): ${byte.wordToHexString(addr)}`, RuntimeErrorCode.UNALIGNED_MEM_ACCESS);
+        }
         const data = mem.readWord(addr);
         regs.setVal(reg_t, data);
         regs.advancePC();

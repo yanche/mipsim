@@ -32,6 +32,7 @@ export class Memory {
         this._blockOp(addr, 4, word);
     }
 
+    // BIG ENDIAN
     private _blockOp(addr: Addr, byteLen: number, writingData?: Bit[]): Bit[] {
         let blockSeq = this._blockSeq(addr);
         let blockOffset = this._blockOffset(addr);
