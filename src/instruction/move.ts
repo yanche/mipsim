@@ -9,7 +9,7 @@ import { genParserREG1, makeInstructionNameMap } from "./util";
 // the contents of register HI are moved to the specified register
 // $d = $HI
 // mfhi $d
-const mfhi = new Instruction({
+export const mfhi = new Instruction({
     name: "MFHI",
     pattern: "0000 0000 0000 0000 dddd d000 0001 0000",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
@@ -23,7 +23,7 @@ const mfhi = new Instruction({
 // the contents of register LO are moved to the specified register
 // $d = $LO
 // mflo $d
-const mflo = new Instruction({
+export const mflo = new Instruction({
     name: "MFLO",
     pattern: "0000 0000 0000 0000 dddd d000 0001 0010",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
