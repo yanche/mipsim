@@ -2,9 +2,10 @@
 import Memory from "../memory";
 import { parse } from "../instruction";
 import { isPesudoInstruction, pseudoGetCount, pseudoCodeConv } from "../instruction/pseudo";
-import { validate, byte, parseAsciiStr } from "../utility";
-import { Word, Bit, Byte, HalfWord } from "../def";
+import { validate, byte } from "../utility";
+import { Word } from "../def";
 import { MIPSError, SyntaxErrorCode } from "../error";
+import { parseDataAllocation } from "./dataalloc";
 
 interface CodeContext {
     textSeg: boolean;
@@ -169,76 +170,8 @@ function numPtrToAddr(ptr: number): Word {
 
 function parseDataAssign(codeline: string, ctx: CodeContext, mem: Memory): void {
     // .asciiz
-    const spaceIdx = codeline.indexOf(" ");
-    const directive = codeline.slice(0, spaceIdx);
-    const content = codeline.slice(spaceIdx).trim();
-    if (spaceIdx === -1 || content.length === 0) {
-        throw new MIPSError(`invalid code line in data segment: ${codeline}`, SyntaxErrorCode.UNKNOWN_ASSEMBLY);
+    const data = parseDataAllocation(codeline, ctx.dataPtr);
+    for (let i = 0; i < data.length; ++i) {
+        mem.writeByte(numPtrToAddr(ctx.dataPtr++), data[i]);
     }
-    let tail0 = false;
-    switch (directive) {
-        case ".asciiz":
-            tail0 = true;
-        case ".ascii":
-            if (content[0] === '"' && content[content.length - 1] === '"') {
-                const asciiStr = content.slice(1, -1);
-                if (asciiStr.length === 0 || asciiStr === "\\") {
-                    throw new MIPSError(`ascii content cannot be empty or only \\: ${asciiStr}`, SyntaxErrorCode.INVALID_ASSEMBLY);
-                }
-                const { result, err } = parseAsciiStr(asciiStr);
-                if (err) {
-                    throw new MIPSError(`failed to parse asciistr: ${asciiStr}`, SyntaxErrorCode.INVALID_COMPONENT);
-                }
-                for (let b of result) {
-                    mem.writeByte(numPtrToAddr(ctx.dataPtr++), b);
-                }
-                if (tail0) {
-                    mem.writeByte(numPtrToAddr(ctx.dataPtr++), byte.makeByte0());
-                }
-            } else {
-                throw new MIPSError(`invalid input for .asciiz and .ascii: ${content}`, SyntaxErrorCode.INVALID_ASSEMBLY);
-            }
-            return;
-        case ".byte":
-            mem.writeByte(numPtrToAddr(ctx.dataPtr++), <Byte>parseUnsignedNumStrToBits(content, 8));
-            return;
-        case ".half":
-            mem.writeHalfWord(numPtrToAddr(ctx.dataPtr), <HalfWord>parseUnsignedNumStrToBits(content, 16));
-            ctx.dataPtr += 2;
-            return;
-        case ".word":
-            mem.writeWord(numPtrToAddr(ctx.dataPtr), <Word>parseUnsignedNumStrToBits(content, 32));
-            ctx.dataPtr += 4;
-            return;
-        case ".align":
-            if (content !== "1" && content !== "2") {
-                throw new MIPSError(`invalid value for .align directive: ${content}, currently only allow 1 or 2`, SyntaxErrorCode.INVALID_ASSEMBLY);
-            }
-            const base = Math.pow(2, Number(content)); // 2 or 4
-            if ((ctx.dataPtr % base) !== 0) {
-                ctx.dataPtr += (base - (ctx.dataPtr % base));
-            }
-            return;
-        case ".space":
-            ctx.dataPtr += parseUnsignedNumStr(content);
-            return;
-        default: throw new MIPSError(`unknown directive: ${directive}`, SyntaxErrorCode.UNKNOWN_ASSEMBLY);
-    }
-}
-
-function parseUnsignedNumStrToBits(input: string, bitsLen: number): Bit[] {
-    const num = parseUnsignedNumStr(input);
-    const { bits, err } = byte.bitsNumFill(byte.numToBits(num).result, bitsLen, false);
-    if (err) {
-        throw new MIPSError(`fail to encode into ${bitsLen}-bits integer: ${input}`, SyntaxErrorCode.NUM_OVERFLOW);
-    }
-    return bits;
-}
-
-function parseUnsignedNumStr(input: string): number {
-    const num = parseInt(input, input.slice(0, 2) === "0x" ? 16 : 10);
-    if (isNaN(num) || num < 0 || !validate.num(num, validate.NUM_FLAG.INT)) {
-        throw new MIPSError(`invalid unsigned number string: ${input}`, SyntaxErrorCode.INVALID_NUM);
-    }
-    return num;
 }

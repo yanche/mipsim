@@ -1,6 +1,7 @@
 
 import { Byte, Word, Bit } from "../def";
 import * as validate from "./validate";
+import { flatten } from "./index";
 
 export function makeArray<T>(len: number, valForAll: T): T[] {
     const ret = new Array<T>(len);
@@ -208,21 +209,15 @@ export function bitsMul(bits1: Word, bits2: Word, signed: boolean): {
 }
 
 export function bitsNumFill(bitsOfNum: Bit[], lenToFill: number, signed: boolean): { bits?: Bit[]; err?: string } {
-    if (bitsOfNum.length > lenToFill) {
-        if (signed) {
-            return { err: `length of input bits is larger than the target: ${bitsOfNum.length}, ${lenToFill}` };
-        } else {
-            const first1 = bitsOfNum.indexOf(true);
-            const startIdx = bitsOfNum.length - lenToFill;
-            if (first1 < startIdx) {
-                return { err: `length of input bits is larger than the target: ${bitsOfNum.length}, ${lenToFill}` };
-            } else {
-                // for unsigned integer
-                return { bits: bitsOfNum.slice(startIdx) };
-            }
-        }
+    const lendiff = lenToFill - bitsOfNum.length;
+    const retBits = lendiff < 0 ? bitsOfNum.slice(-lendiff) : makeArray(lendiff, signed ? bitsOfNum[0] : false).concat(bitsOfNum);
+    const numBefore = bitsToNum(bitsOfNum, signed);
+    const numAfter = bitsToNum(retBits, signed);
+    if (numAfter === numBefore) {
+        return { bits: retBits };
+    } else {
+        return { err: `failed to encode given number into ${lenToFill}-bits integer: ${bitsTo01Str(bitsOfNum)}, ${signed ? "signed" : "unsigned"}` };
     }
-    return { bits: makeArray(lenToFill - bitsOfNum.length, signed ? bitsOfNum[0] : false).concat(bitsOfNum) };
 }
 
 export function twosComplement(bits: Bit[]): Bit[] {
@@ -244,6 +239,10 @@ export function bitsFrom01Str(strOf01: string): Bit[] {
     })
 }
 
+export function bitsTo01Str(bits: Bit[]): string {
+    return bits.map(b => b ? "1" : "0").join("");
+}
+
 type Bits4 = [Bit, Bit, Bit, Bit];
 
 export function bits4ToHexString(input: Bits4): string {
@@ -258,10 +257,30 @@ export function byteToHexString(input: Byte): string {
 //     return [0, 8, 16, 24].map(i => byteToHexString(<Byte>input.slice(i, i + 8))).join("");
 // }
 
+export function bitsFromHexStr(hex: string): { bits?: Bit[], err?: string } {
+    hex = hex.trim().toLowerCase();
+    if (hex.slice(0, 2) === "0x") {
+        hex = hex.slice(2);
+    }
+    const ret: Bit[][] = [];
+    for (let i = 0; i < hex.length; ++i) {
+        const ch = hex[i];
+        if (hexBitMap.has(ch)) {
+            ret.push(hexBitMap.get(ch));
+        } else {
+            return { err: `invalid hex string: ${hex}` };
+        }
+    }
+    return { bits: flatten(ret) };
+}
+
 const hexMap = new Map<string, string>();
+const hexBitMap = new Map<string, Bit[]>();
 for (let i = 0; i < 16; ++i) {
     const binary = bitsNumFill(numToBits(i).result, 4, false).bits.map(d => d ? "1" : "0").join("");
-    hexMap.set(binary, i.toString(16));
+    const hexStr = i.toString(16);
+    hexMap.set(binary, hexStr);
+    hexBitMap.set(hexStr, bitsNumFill(numToBits(i).result, 4, false).bits);
 }
 export function wordToHexString(word: Word): string {
     const ret: string[] = [];

@@ -18,6 +18,33 @@ export function findFirst<T>(arr: T[], predicate: (item: T, idx: number) => bool
     return def;
 }
 
+export function range(total: number): { err?: string; result?: number[] };
+export function range(start: number, end?: number): { err?: string; result?: number[] } {
+    let startReq = validate.NUM_FLAG.INT;
+    if (end === undefined) {
+        startReq |= validate.NUM_FLAG.NONNEG;
+    } else {
+        if (!validate.num(end, validate.NUM_FLAG.INT)) {
+            return { err: `end is not an integer: ${end}` };
+        }
+        if (start > end) {
+            return { err: `start is greater than end, start: ${start}, end: ${end}` };
+        }
+    }
+    if (!validate.num(start, startReq)) {
+        return { err: `start is not a valid integer: ${start}` };
+    }
+    if (end === undefined) {
+        end = start;
+        start = 0;
+    }
+    const ret = new Array(end - start);
+    for (let i = 0; i < end - start; ++i) {
+        ret[i] = start + i;
+    }
+    return { result: ret };
+}
+
 const ch_slash = "\\".charCodeAt(0);
 const escapeMap = new Map<string, number>();
 escapeMap.set("a", 7);
