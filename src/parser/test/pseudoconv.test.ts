@@ -419,4 +419,24 @@ describe("pseudo instructions", () => {
             "add $t2, $t3, $at",
         ], "0x00400004", new Map<string, number>().set("main", parseInt("0x00400004", 16)), true);
     });
+
+    it("b", () => {
+        const code = `
+            main:
+            b main
+            `;
+        testMIPSParsing2(code, [
+            "bgez $r0, main"
+        ], "0x00400004", new Map<string, number>().set("main", parseInt("0x00400004", 16)), true);
+    });
+
+    it("bal", () => {
+        const code = `
+            main:
+            bal main
+            `;
+        testMIPSParsing2(code, [
+            "bgezal $r0, main"
+        ], "0x00400004", new Map<string, number>().set("main", parseInt("0x00400004", 16)), true);
+    });
 });

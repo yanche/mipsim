@@ -438,6 +438,26 @@ const move = genConstHandler(1, (comp: string) => {
 });
 map.set("move", move);
 
+// b label
+const b = genConstHandler(1, (comp: string, labelMap: Map<string, number>) => {
+    return processComponents<[LABEL]>(comp, [CPattern.LABEL], (comps: [LABEL]) => {
+        return [
+            `bgez $r0, ${comps[0]}`
+        ];
+    });
+});
+map.set("b", b);
+
+// bal label
+const bal = genConstHandler(1, (comp: string, labelMap: Map<string, number>) => {
+    return processComponents<[LABEL]>(comp, [CPattern.LABEL], (comps: [LABEL]) => {
+        return [
+            `bgezal $r0, ${comps[0]}`
+        ];
+    });
+});
+map.set("bal", bal);
+
 // TODO
 // ulh(u)
 // ulw
