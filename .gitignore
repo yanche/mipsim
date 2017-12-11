@@ -4,4 +4,4 @@
 /typings
 *.log
 *.ic
-*.asm
+#*.asm

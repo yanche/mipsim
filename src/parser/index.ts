@@ -26,7 +26,7 @@ function processAndCatchMIPSError(cb: () => void, lineNum: number) {
     }
     catch (err) {
         if (err instanceof MIPSError) {
-            err.lineNum = lineNum;
+            err.lineNum = lineNum + 1;
         }
         throw err;
     }

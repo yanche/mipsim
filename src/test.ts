@@ -1,5 +1,9 @@
+
 import * as fs from "fs";
 import * as program from "./program";
+import * as _console from "./console";
+
+_console.use(console.error);
 
 fs.readFile("./qsort.tlang.asm", (err, data) => {
     if (err) {
