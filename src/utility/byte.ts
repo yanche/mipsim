@@ -257,6 +257,14 @@ export function byteToHexString(input: Byte): string {
 //     return [0, 8, 16, 24].map(i => byteToHexString(<Byte>input.slice(i, i + 8))).join("");
 // }
 
+export function wordFromHexStr(hex: string): { bits?: Word, err?: string } {
+    const bits = bitsFromHexStr(hex);
+    if (bits.err) return { err: bits.err };
+    const fill = bitsNumFill(bits.bits, 32, false);
+    if (fill.err) return { err: fill.err };
+    return { bits: <Word>fill.bits };
+}
+
 export function bitsFromHexStr(hex: string): { bits?: Bit[], err?: string } {
     hex = hex.trim().toLowerCase();
     if (hex.slice(0, 2) === "0x") {

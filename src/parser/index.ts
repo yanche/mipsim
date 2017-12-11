@@ -3,7 +3,7 @@ import Memory from "../memory";
 import { parse } from "../instruction";
 import { isPesudoInstruction, pseudoGetCount, pseudoCodeConv } from "../instruction/pseudo";
 import { validate, byte } from "../utility";
-import { Word } from "../def";
+import { Word, codeStartAddr, dataStartAddr } from "../def";
 import { MIPSError, SyntaxErrorCode } from "../error";
 import { parseDataAllocation } from "./dataalloc";
 
@@ -33,10 +33,10 @@ function processAndCatchMIPSError(cb: () => void, lineNum: number) {
 }
 
 export function parseMIPSCode(codelines: string[]): Memory {
-    const firstInstAddr = parseInt("0x00400000", 16);
+    const firstInstAddr = parseInt(codeStartAddr, 16);
     const ctx: CodeContext = {
         textSeg: true, // by default in text segment
-        dataPtr: parseInt("0x10000000", 16),
+        dataPtr: parseInt(dataStartAddr),
         textPtr: firstInstAddr + 4,
         labelMap: new Map<string, number>()
     };
