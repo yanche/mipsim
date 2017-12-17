@@ -93,22 +93,38 @@ const mul = genConstHandler(2, (comp: string) => {
 map.set("mul", mul);
 
 // mulo $d, $s, $t
-const mulo = genConstHandler(7, (comp: string) => {
-    return processComponents<[REG, REG, REG]>(comp, [CPattern.REG, CPattern.REG, CPattern.REG], (comps: [REG, REG, REG]) => {
-        const reg_d = "$" + comps[0].regName;
-        const reg_s = "$" + comps[1].regName;
-        const reg_t = "$" + comps[2].regName;
-        return [
-            `mult ${reg_s}, ${reg_t}`,
-            `mfhi $at`,
-            `mflo ${reg_d}`,
-            `sra ${reg_d}, ${reg_d}, 31`,
-            `beq $at, ${reg_d}, 8`,
-            `break`,
-            `mflo ${reg_d}`,
-        ];
-    });
-});
+const mulo = {
+    getCount: (comp: string) => {
+        const comps = parseComponents<[REG, REG, REG | IMM]>(comp, [CPattern.REG, CPattern.REG, CPattern.REG | CPattern.IMM]);
+        const lastComp = comps[2];
+        return 7 + ("num" in lastComp ? li.getCount("$at, " + (<IMM>lastComp).num) : 0);
+    },
+    conv: (comp: string): string[] => {
+        return processComponents<[REG, REG, REG | IMM]>(comp, [CPattern.REG, CPattern.REG, CPattern.REG | CPattern.IMM], (comps: [REG, REG, REG | IMM]) => {
+            const reg_d = "$" + comps[0].regName;
+            const reg_s = "$" + comps[1].regName;
+            const lastComp = comps[2];
+            let reg_t: string;
+            let ret: string[];
+            if ("num" in lastComp) {
+                reg_t = "$at";
+                ret = li.conv("$at, " + (<IMM>lastComp).num, null);
+            } else {
+                reg_t = "$" + (<REG>lastComp).regName;
+                ret = [];
+            }
+            return ret.concat([
+                `mult ${reg_s}, ${reg_t}`,
+                `mfhi $at`,
+                `mflo ${reg_d}`,
+                `sra ${reg_d}, ${reg_d}, 31`,
+                `beq $at, ${reg_d}, 8`,
+                `break`,
+                `mflo ${reg_d}`,
+            ]);
+        });
+    }
+};
 map.set("mulo", mulo);
 
 // neg(u) $d, $s

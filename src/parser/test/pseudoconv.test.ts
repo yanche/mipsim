@@ -14,6 +14,30 @@ describe("pseudo instructions", () => {
         ], "0x00400004", new Map<string, number>(), true);
     });
 
+    it("add(u)", () => {
+        const code = `
+            main:
+            add $t0, $t1, $t3
+            addu $t0, $t1, $t3
+            `;
+        testMIPSParsing2(code, [
+            "add $t0, $t1, $t3",
+            "addu $t0, $t1, $t3",
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+
+    it("add(u) with IMM", () => {
+        const code = `
+            main:
+            add $t0, $t1, 4
+            addu $t0, $t1, 4
+            `;
+        testMIPSParsing2(code, [
+            "addi $t0, $t1, 4",
+            "addiu $t0, $t1, 4",
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+
     it("div(u)", () => {
         const code = `
             main:
@@ -50,6 +74,41 @@ describe("pseudo instructions", () => {
             `;
         testMIPSParsing2(code, [
             "mult $t1, $t3",
+            "mfhi $at",
+            "mflo $t0",
+            "sra $t0, $t0, 31",
+            "beq $at, $t0, 8",
+            "break",
+            "mflo $t0"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+
+    it("mulo with IMM", () => {
+        const code = `
+            main:
+            mulo $t0, $t1, 4
+            `;
+        testMIPSParsing2(code, [
+            "ori $at, $r0, 4",
+            "mult $t1, $at",
+            "mfhi $at",
+            "mflo $t0",
+            "sra $t0, $t0, 31",
+            "beq $at, $t0, 8",
+            "break",
+            "mflo $t0"
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+
+    it("mulo with large IMM", () => {
+        const code = `
+            main:
+            mulo $t0, $t1, 655400
+            `;
+        testMIPSParsing2(code, [
+            "lui $at, 10",
+            "ori $at, $at, 40",
+            "mult $t1, $at",
             "mfhi $at",
             "mflo $t0",
             "sra $t0, $t0, 31",
