@@ -29,6 +29,21 @@ const abs = genConstHandler(3, (comp: string) => {
 })
 map.set("abs", abs);
 
+// add(u) $d, $s, $t|imm -> addi(u) $d, $s, imm
+function addGen(command: string, commandi: string): Handler {
+    return genConstHandler(1, (comp: string) => {
+        try {
+            parseComponents<[REG, REG, IMM]>(comp, [CPattern.REG, CPattern.REG, CPattern.IMM]);
+            return [`${commandi} ${comp}`];
+        }
+        catch (err) {
+            return [`${command} ${comp}`]; // fall back to original instruction
+        }
+    });
+}
+map.set("add", addGen("add", "addi"));
+map.set("addu", addGen("addu", "addiu"));
+
 // div(u) $d, $s, $t
 function divGen(command: string): Handler {
     return {
