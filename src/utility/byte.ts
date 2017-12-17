@@ -313,16 +313,15 @@ function unsignedBitsMul(bits1: Bit[], bits2: Bit[]): Bit[] {
                 const rep1 = bitsNumFill(result, maxlen, false).bits;
                 const rep2 = bitsNumFill(addnum, maxlen, false).bits;
                 result = bitsAdd(<any>rep1, <any>rep2).result;
-                result = removeLeading0(result);
             } else {
                 result = addnum;
             }
         }
     }
-    return removeLeading0(result);
+    return result ? removeLeading0(result) : [false];
 }
 
 function removeLeading0(bits: Bit[]): Bit[] {
     const idx1 = bits.indexOf(true);
-    return idx1 < 0 ? [true] : bits.slice(idx1);
+    return idx1 < 0 ? [false] : bits.slice(idx1);
 }

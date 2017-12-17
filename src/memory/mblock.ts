@@ -13,7 +13,7 @@ export class Block {
 
     public read(offset: number, bytes: number): Bit[] {
         const end = offset + bytes;
-        if (end >= this.size) {
+        if (end > this.size) {
             throw new Error(`reading block exceeds block boundary, from: ${offset}, to ${end}, block size: ${this.size}`);
         }
         return this._data.slice(offset * 8, end * 8);

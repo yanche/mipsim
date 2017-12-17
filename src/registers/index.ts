@@ -1,6 +1,6 @@
 
 import { Word, HalfWord } from "../def";
-import { byte, flatten } from "../utility";
+import { byte } from "../utility";
 import { MIPSError, RuntimeErrorCode } from "../error";
 
 interface Register {
@@ -119,7 +119,7 @@ export class Registers {
     public getVal(regnum: number): Word {
         const reg = this._map.get(regnum);
         if (reg) {
-            return <Word>flatten(reg.value);
+            return reg.value;
         } else {
             throw new MIPSError(`reg not found: ${regnum}`, RuntimeErrorCode.REG_NOT_FOUND);
         }
@@ -128,7 +128,7 @@ export class Registers {
     public setVal(regnum: number, word: Word): void {
         const reg = this._map.get(regnum);
         if (reg) {
-            reg.value = <Word>flatten(word);
+            reg.value = word;
         } else {
             throw new MIPSError(`reg not found: ${regnum}`, RuntimeErrorCode.REG_NOT_FOUND);
         }

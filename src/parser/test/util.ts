@@ -23,7 +23,7 @@ export function testMIPSParsing(code: string, memData: ExpectedMemory[], labelMa
         }
     });
     const codelines = code.replace("\r", "").split("\n").map(s => s.trim()).filter(s => s.length);
-    const mem = parseMIPSCode(codelines);
+    const mem = parseMIPSCode(codelines).mem;
     for (let m of memExpected) {
         const addrNum = parseInt(m.addr, 16);
         if (m.data.length === 0 || m.addr.length === 0 || isNaN(addrNum)) {

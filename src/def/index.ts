@@ -19,4 +19,4 @@ export const heapPointerAddr = "0x10000000";
 // actually 0x100000000, first word is preserved for heap pointer
 export const dataStartAddr = "0x10000004";
 export const heapPointerVal = "0x10040000";
-export const stackPointerAddr = "0x80000000";
+export const stackPointerAddr = "0x7ffffffc";

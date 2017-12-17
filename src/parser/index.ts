@@ -7,11 +7,21 @@ import { Word, codeStartAddr, dataStartAddr } from "../def";
 import { MIPSError, SyntaxErrorCode } from "../error";
 import { parseDataAllocation } from "./dataalloc";
 
+export interface SourceInstruction {
+    // directly parsed from
+    source: string;
+    // indirectly from, a pseudo-instruction
+    originSource?: string;
+    // the index of this instruction in the array converted from pseudo-instruction indicated by originSource
+    pseudoConvIdx?: number;
+}
+
 interface CodeContext {
     textSeg: boolean;
     dataPtr: number;
     textPtr: number;
     labelMap: Map<string, number>;
+    sourceMap: Map<number, SourceInstruction>;
 }
 
 interface CodeLineRep {
@@ -32,13 +42,19 @@ function processAndCatchMIPSError(cb: () => void, lineNum: number) {
     }
 }
 
-export function parseMIPSCode(codelines: string[]): Memory {
+export interface ParseReturn {
+    mem: Memory;
+    sourceMap: Map<number, SourceInstruction>;
+}
+
+export function parseMIPSCode(codelines: string[]): ParseReturn {
     const firstInstAddr = parseInt(codeStartAddr, 16);
     const ctx: CodeContext = {
         textSeg: true, // by default in text segment
         dataPtr: parseInt(dataStartAddr),
         textPtr: firstInstAddr + 4,
-        labelMap: new Map<string, number>()
+        labelMap: new Map<string, number>(),
+        sourceMap: new Map<number, SourceInstruction>(),
     };
     const mem = new Memory();
     let len = codelines.length;
@@ -81,10 +97,13 @@ export function parseMIPSCode(codelines: string[]): Memory {
     }
     // first instruction is J main
     mem.writeWord(numPtrToAddr(firstInstAddr), parse("j main", firstInstAddr, ctx.labelMap));
-    return mem;
+    return {
+        mem: mem,
+        sourceMap: ctx.sourceMap
+    };
 }
 
-function parseTextInstruction(code: string, generated: boolean, ctx: CodeContext, mem: Memory): void {
+function parseTextInstruction(code: string, generated: boolean, ctx: CodeContext, mem: Memory, originCode?: string, pseudoConvIdx?: number): void {
     code = (code || "").trim();
     if (code.length === 0 || code[0] === "#") return; // comment starts with #
     if (code === ".data") {
@@ -98,6 +117,11 @@ function parseTextInstruction(code: string, generated: boolean, ctx: CodeContext
     if (ctx.textSeg && code[code.length - 1] !== ":") {
         const bits = parse(code, ctx.textPtr, ctx.labelMap, generated);
         mem.writeWord(numPtrToAddr(ctx.textPtr), bits);
+        ctx.sourceMap.set(ctx.textPtr, {
+            source: code,
+            originSource: originCode,
+            pseudoConvIdx: pseudoConvIdx
+        });
         ctx.textPtr += 4;
         return;
     }
@@ -109,7 +133,7 @@ function parseTextCodeLine(codeline: CodeLineRep, ctx: CodeContext, mem: Memory)
         if (pseudoConv.length !== codeline.targetCount) {
             throw new Error(`pseudo instruction does not converted into expected number of instructions: ${codeline.code}, expected: ${codeline.targetCount}, actual: ${pseudoConv.length} \r\n${pseudoConv.join("\r\n")}`)
         } else {
-            pseudoConv.forEach(p => parseTextInstruction(p, true, ctx, mem));
+            pseudoConv.forEach((p, idx) => parseTextInstruction(p, true, ctx, mem, codeline.code, idx));
         }
     } else {
         parseTextInstruction(codeline.code, false, ctx, mem);
