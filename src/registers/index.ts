@@ -50,8 +50,15 @@ export enum REG {
     RA = 31
 }
 
+const aliasMap = new Map<string, string>();
+aliasMap.set("zero", "r0");
+
 export function getRegNumber(regname: string): number {
-    return nameMap.get((regname || "").toLowerCase());
+    regname = (regname || "").toLowerCase();
+    if (aliasMap.has(regname)) {
+        regname = aliasMap.get(regname);
+    }
+    return nameMap.get(regname);
 }
 
 const nameMap = new Map<string, number>();
