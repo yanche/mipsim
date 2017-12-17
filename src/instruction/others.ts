@@ -14,7 +14,7 @@ const heapPtrAddr = byte.wordFromHexStr(heapPointerAddr).bits;
 // Note: The encoding for a NOOP represents the instruction SLL $0, $0, 0 which has no side effects.
 //       In fact, nearly every instruction that has $0 as its destination register will have no side effect and can thus be considered a NOOP instruction.
 export const noop = new Instruction({
-    name: "NOOP",
+    name: "NOP",
     pattern: "0000 0000 0000 0000 0000 0000 0000 0000",
     execute: (itrn: Word, mem: Memory, regs: Registers) => {
         regs.advancePC();

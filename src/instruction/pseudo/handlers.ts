@@ -30,19 +30,21 @@ const abs = genConstHandler(3, (comp: string) => {
 map.set("abs", abs);
 
 // add(u) $d, $s, $t|imm -> addi(u) $d, $s, imm
-function addGen(command: string, commandi: string): Handler {
+function addGen(command: string, commandi: string, neg?: boolean): Handler {
     return genConstHandler(1, (comp: string) => {
-        try {
-            parseComponents<[REG, REG, IMM]>(comp, [CPattern.REG, CPattern.REG, CPattern.IMM]);
-            return [`${commandi} ${comp}`];
-        }
-        catch (err) {
+        const comps = parseComponents<[REG, REG, IMM | REG]>(comp, [CPattern.REG, CPattern.REG, CPattern.IMM | CPattern.REG]);
+        const lastComp = comps[2];
+        if ("num" in lastComp) {
+            return [`${commandi} $${comps[0].regName}, $${comps[1].regName}, ${(<IMM>lastComp).num * (neg ? -1 : 1)}`]
+        } else {
             return [`${command} ${comp}`]; // fall back to original instruction
         }
     });
 }
 map.set("add", addGen("add", "addi"));
 map.set("addu", addGen("addu", "addiu"));
+map.set("sub", addGen("sub", "addi", true));
+map.set("subu", addGen("subu", "addiu", true));
 
 // div(u) $d, $s, $t
 function divGen(command: string): Handler {

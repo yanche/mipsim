@@ -38,6 +38,30 @@ describe("pseudo instructions", () => {
         ], "0x00400004", new Map<string, number>(), true);
     });
 
+    it("sub(u)", () => {
+        const code = `
+            main:
+            sub $t0, $t1, $t3
+            subu $t0, $t1, $t3
+            `;
+        testMIPSParsing2(code, [
+            "sub $t0, $t1, $t3",
+            "subu $t0, $t1, $t3",
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+
+    it("sub(u) with IMM", () => {
+        const code = `
+            main:
+            sub $t0, $t1, 4
+            subu $t0, $t1, 4
+            `;
+        testMIPSParsing2(code, [
+            "addi $t0, $t1, -4",
+            "addiu $t0, $t1, -4",
+        ], "0x00400004", new Map<string, number>(), true);
+    });
+
     it("div(u)", () => {
         const code = `
             main:
