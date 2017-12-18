@@ -97,6 +97,9 @@ export function parseMIPSCode(codelines: string[]): ParseReturn {
     }
     // first instruction is J main
     mem.writeWord(numPtrToAddr(firstInstAddr), parse("j main", firstInstAddr, ctx.labelMap));
+    ctx.sourceMap.set(firstInstAddr, {
+        source: "j main"
+    });
     return {
         mem: mem,
         sourceMap: ctx.sourceMap

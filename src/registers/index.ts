@@ -61,6 +61,14 @@ export function getRegNumber(regname: string): number {
     return nameMap.get(regname);
 }
 
+export function getRegName(regnum: number): string {
+    return numMap.get(regnum);
+}
+
+export function getAllRegNums(): REG[] {
+    return [...numMap].map(b => b[0]);
+}
+
 const nameMap = new Map<string, number>();
 nameMap.set("status", REG.STATUS);
 nameMap.set("badvaddr", REG.BADVADDR);
@@ -101,6 +109,8 @@ nameMap.set("gp", REG.GP);
 nameMap.set("sp", REG.SP);
 nameMap.set("fp", REG.FP);
 nameMap.set("ra", REG.RA);
+const numMap = new Map<number, string>();
+[...nameMap].forEach(b => numMap.set(b[1], b[0]));
 
 export class Registers {
     private _map: Map<number, Register>;

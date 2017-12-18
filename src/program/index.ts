@@ -20,6 +20,15 @@ export class Program {
         this._regs = new Registers();
         this._regs.setVal(REG.PC, <Word>byte.wordFromHexStr(codeStartAddr).bits); // set program start address
         this._regs.setVal(REG.SP, <Word>byte.wordFromHexStr(stackPointerAddr).bits); // set $sp
+        this._parse();
+    }
+
+    public get regs(): Registers {
+        return this._regs;
+    }
+
+    public get mem(): Memory {
+        return this._mem;
     }
 
     public run() {
@@ -45,8 +54,7 @@ export class Program {
             _console.write("program stopped\n");
             return;
         }
-        
-        this._tryParse();
+
         this._mem.clearDirty();
         this._regs.clearDirty();
 
@@ -64,11 +72,20 @@ export class Program {
         }
     }
 
-    private _tryParse() {
-        if (this._mem) {
-            return;
+    public getSource(addr: number): SourceInstruction {
+        if (this._sourceMap.has(addr)) {
+            const ret = this._sourceMap.get(addr);
+            return {
+                source: ret.source,
+                originSource: ret.originSource,
+                pseudoConvIdx: ret.pseudoConvIdx
+            };
+        } else {
+            throw new Error(`given address is not part of code: ${addr}`);
         }
+    }
 
+    private _parse() {
         try {
             const parseret = parseMIPSCode(this._sources);
             this._sourceMap = parseret.sourceMap;
@@ -84,14 +101,5 @@ export class Program {
                 _console.write(err.stack + "\n");
             }
         }
-    }
-
-    public parse() {
-        if (this._mem) {
-            _console.write("parsing finished\n");
-            return;
-        }
-
-        this._tryParse();
     }
 }
