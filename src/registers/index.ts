@@ -1,6 +1,6 @@
 
 import { Word, HalfWord } from "../def";
-import { byte } from "../utility";
+import { byte, DirtyTracker, DirtyInfo } from "../utility";
 import { MIPSError, RuntimeErrorCode } from "../error";
 
 interface Register {
@@ -105,6 +105,7 @@ nameMap.set("ra", REG.RA);
 export class Registers {
     private _map: Map<number, Register>;
     private _word4: Word;
+    private _dirtyTracker: DirtyTracker<number, Word>;
 
     public advancePC(): void {
         // PC = PC + 4
@@ -128,10 +129,21 @@ export class Registers {
     public setVal(regnum: number, word: Word): void {
         const reg = this._map.get(regnum);
         if (reg) {
-            reg.value = word;
+            if (!byte.bitsEqual(reg.value, word).equal) {
+                this._dirtyTracker.track(regnum, reg.value, word);
+                reg.value = word;
+            }
         } else {
             throw new MIPSError(`reg not found: ${regnum}`, RuntimeErrorCode.REG_NOT_FOUND);
         }
+    }
+
+    public clearDirty() {
+        this._dirtyTracker.clear();
+    }
+
+    public getDirtyInfo(): DirtyInfo<number, Word>[] {
+        return this._dirtyTracker.getDirtyInfo();
     }
 
     constructor() {
@@ -144,5 +156,6 @@ export class Registers {
         }
         this._word4 = byte.makeWord0();
         this._word4[29] = true;
+        this._dirtyTracker = new DirtyTracker<number, Word>((v1: Word, v2: Word) => byte.bitsEqual(v1, v2).equal);
     }
 }

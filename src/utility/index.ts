@@ -120,3 +120,39 @@ export function parseAsciiStr(input: string): { result?: Byte[]; err?: string } 
     }
     return { result: ret };
 }
+
+export interface DirtyInfo<TKey, TVal> {
+    key: TKey;
+    old: TVal;
+    new: TVal;
+}
+
+export class DirtyTracker<TKey, TVal> {
+    private _tracker: Map<TKey, DirtyInfo<TKey, TVal>>;
+    private _equals: (v1: TVal, v2: TVal) => boolean;
+
+    constructor(equals: (v1: TVal, v2: TVal) => boolean) {
+        this._tracker = new Map<TKey, DirtyInfo<TKey, TVal>>();
+        this._equals = equals;
+    }
+
+    public track(key: TKey, oldval: TVal, newval: TVal): void {
+        if (!this._tracker.has(key)) {
+            this._tracker.set(key, {
+                key: key,
+                old: oldval,
+                new: newval,
+            });
+        } else {
+            this._tracker.get(key).new = newval;
+        }
+    }
+
+    public getDirtyInfo(): DirtyInfo<TKey, TVal>[] {
+        return [...this._tracker].map(b => b[1]).filter(b => !this._equals(b.old, b.new));
+    }
+
+    public clear(): void {
+        this._tracker.clear();
+    }
+}

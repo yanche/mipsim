@@ -8,40 +8,90 @@ import { byte } from "../utility";
 import { MIPSError } from "../error/index";
 import * as _console from "../console";
 
-function execute(mem: Memory, regs: Registers, sourceMap: Map<number, SourceInstruction>) {
-    let halt = false;
-    do {
-        const pc = regs.getVal(REG.PC);
+export class Program {
+    private _sources: string[];
+    private _sourceMap: Map<number, SourceInstruction>;
+    private _mem: Memory;
+    private _regs: Registers;
+    private _halt: boolean;
+
+    constructor(sources: string[]) {
+        this._sources = sources;
+        this._regs = new Registers();
+        this._regs.setVal(REG.PC, <Word>byte.wordFromHexStr(codeStartAddr).bits); // set program start address
+        this._regs.setVal(REG.SP, <Word>byte.wordFromHexStr(stackPointerAddr).bits); // set $sp
+    }
+
+    public run() {
+        if (this._halt) {
+            _console.write("program stopped\n");
+            return;
+        }
+
+        do {
+            this.step();
+        } while (!this._halt);
+    }
+
+    public getDirtyInfo() {
+        return {
+            regs: this._regs.getDirtyInfo(),
+            mem: this._mem.getDirtyInfo(),
+        };
+    }
+
+    public step() {
+        if (this._halt) {
+            _console.write("program stopped\n");
+            return;
+        }
+        
+        this._tryParse();
+        this._mem.clearDirty();
+        this._regs.clearDirty();
+
+        const pc = this._regs.getVal(REG.PC);
         try {
-            halt = instruction.execute(mem, regs);
+            this._halt = instruction.execute(this._mem, this._regs);
         }
         catch (err) {
             const pcNum = byte.bitsToNum(pc, false);
-            const source = sourceMap.get(pcNum);
+            const source = this._sourceMap.get(pcNum);
             _console.write(`error happens at 0x${byte.wordToHexString(pc)}\n`);
             _console.write(`${source.source}${source.originSource ? ` (${source.pseudoConvIdx} from pseudo ${source.originSource})` : ""}\n`)
             _console.write(err.stack + "\n");
-            halt = true;
+            this._halt = true;
         }
-    } while (!halt);
-}
-
-export function executeMIPSCode(codelines: string[]): void {
-    try {
-        const regs = new Registers();
-        regs.setVal(REG.PC, <Word>byte.wordFromHexStr(codeStartAddr).bits); // set program start address
-        regs.setVal(REG.SP, <Word>byte.wordFromHexStr(stackPointerAddr).bits); // set $sp
-        const { mem, sourceMap } = parseMIPSCode(codelines);
-        // the heap pointer, first word of global data segment
-        mem.writeWord(byte.wordFromHexStr(heapPointerAddr).bits, byte.wordFromHexStr(heapPointerVal).bits);
-        execute(mem, regs, sourceMap);
     }
-    catch (err) {
-        if (err instanceof MIPSError) {
-            _console.write(err.message + ", line number: " + err.lineNum + "\n");
-            _console.write(err.stack + "\n");
-        } else {
-            _console.write(err.stack + "\n");
+
+    private _tryParse() {
+        if (this._mem) {
+            return;
         }
+
+        try {
+            const parseret = parseMIPSCode(this._sources);
+            this._sourceMap = parseret.sourceMap;
+            this._mem = parseret.mem;
+            // the heap pointer, first word of global data segment
+            this._mem.writeWord(byte.wordFromHexStr(heapPointerAddr).bits, byte.wordFromHexStr(heapPointerVal).bits);
+        }
+        catch (err) {
+            if (err instanceof MIPSError) {
+                _console.write(err.message + ", line number: " + err.lineNum + "\n");
+                _console.write(err.stack + "\n");
+            } else {
+                _console.write(err.stack + "\n");
+            }
+        }
+    }
+
+    public parse() {
+        if (this._mem) {
+            _console.write("parsing finished\n");
+            return;
+        }
+
+        this._tryParse();
     }
 }

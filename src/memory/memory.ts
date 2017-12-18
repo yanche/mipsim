@@ -1,7 +1,7 @@
 
 import { Block } from "./mblock";
 import { Addr, Word, Byte, HalfWord, memBlockSize, Bit } from "../def";
-import { byte, validate, flatten } from "../utility";
+import { byte, validate, flatten, DirtyTracker, DirtyInfo } from "../utility";
 
 const bsize = Math.log2(memBlockSize);
 if (!validate.num(bsize, validate.NUM_FLAG.INT | validate.NUM_FLAG.POS)) {
@@ -11,6 +11,7 @@ const maxBlockSeq = Math.pow(2, 32 - bsize) - 1;
 
 export class Memory {
     private _map: Map<number, Block>;
+    private _dirtyTracker: DirtyTracker<number, Byte>;
 
     public readByte(addr: Addr): Byte {
         return <Byte>this._blockOp(addr, 1);
@@ -32,6 +33,14 @@ export class Memory {
         this._blockOp(addr, 4, word);
     }
 
+    public clearDirty() {
+        this._dirtyTracker.clear();
+    }
+
+    public getDirtyInfo(): DirtyInfo<number, Byte>[] {
+        return this._dirtyTracker.getDirtyInfo();
+    }
+
     // BIG ENDIAN
     private _blockOp(addr: Addr, byteLen: number, writingData?: Bit[]): Bit[] {
         let blockSeq = this._blockSeq(addr);
@@ -42,7 +51,7 @@ export class Memory {
             const blockHitBytes = Math.min(byteLen, memBlockSize - blockOffset);
             const block = this._getOrCreateBlock(blockSeq);
             if (writingData) {
-                block.write(blockOffset, writingData.slice(writingDataOffset, writingDataOffset += blockHitBytes * 8));
+                block.write(blockOffset, writingData.slice(writingDataOffset, writingDataOffset += blockHitBytes * 8), this._dirtyTracker);
             } else {
                 result.push(block.read(blockOffset, blockHitBytes));
             }
@@ -59,7 +68,7 @@ export class Memory {
             throw new Error(`block sequence exceeds the maximum: ${blockSeq}, max: ${maxBlockSeq}`);
         }
         if (!this._map.has(blockSeq)) {
-            this._map.set(blockSeq, new Block(memBlockSize));
+            this._map.set(blockSeq, new Block(memBlockSize, blockSeq * memBlockSize));
         }
         return this._map.get(blockSeq);
     }
@@ -74,5 +83,6 @@ export class Memory {
 
     constructor() {
         this._map = new Map<number, Block>();
+        this._dirtyTracker = new DirtyTracker<number, Byte>((v1: Byte, v2: Byte) => byte.bitsEqual(v1, v2).equal);
     }
 }
