@@ -1,0 +1,11 @@
+*.ts
+!*.d.ts
+/typings
+*.log
+*.ic
+.vscode
+*.txt
+tsconfig.json
+typings.json
+*.tgz
+**/test

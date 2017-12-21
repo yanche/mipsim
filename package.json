@@ -1,5 +1,5 @@
 {
-  "name": "mipsim",
+  "name": "@belongs/mipsim",
   "version": "0.0.0",
   "description": "",
   "main": "index.js",
@@ -7,5 +7,8 @@
     "test": "mocha **/*.test.js"
   },
   "author": "yanche",
-  "license": "ISC"
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "^4.0.1"
+  }
 }
