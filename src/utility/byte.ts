@@ -243,7 +243,7 @@ export function bitsTo01Str(bits: Bit[]): string {
     return bits.map(b => b ? "1" : "0").join("");
 }
 
-type Bits4 = [Bit, Bit, Bit, Bit];
+export type Bits4 = [Bit, Bit, Bit, Bit];
 
 export function bits4ToHexString(input: Bits4): string {
     return bitsToNum(input.slice(0, 4), false).toString(16);

@@ -1,10 +1,10 @@
 
 import Memory from "../memory";
 import { Registers, REG } from "../registers";
-import { codeStartAddr, stackPointerAddr, heapPointerAddr, heapPointerVal, Word } from "../def";
+import { codeStartAddr, stackPointerAddr, heapPointerAddr, heapPointerVal, Word, Byte } from "../def";
 import * as instruction from "../instruction";
 import { parseMIPSCode, SourceInstruction } from "../parser";
-import { byte } from "../utility";
+import { byte, DirtyInfo } from "../utility";
 import { MIPSError } from "../error/index";
 import * as _console from "../console";
 
@@ -42,7 +42,10 @@ export class Program {
         } while (!this._halt);
     }
 
-    public getDirtyInfo() {
+    public getDirtyInfo(): {
+        regs: DirtyInfo<number, Word>[];
+        mem: DirtyInfo<number, Byte>[];
+    } {
         return {
             regs: this._regs.getDirtyInfo(),
             mem: this._mem.getDirtyInfo(),

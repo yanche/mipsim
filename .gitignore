@@ -1,7 +1,9 @@
 /node_modules
 /src/**/*.js
+*.d.ts
 *.map
 /typings
 *.log
 *.ic
 #*.asm
+/dist
